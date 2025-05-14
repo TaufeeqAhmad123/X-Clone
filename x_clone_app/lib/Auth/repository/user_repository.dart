@@ -9,15 +9,19 @@ class UserRepository {
   final String collectionName = 'users';
   late String uid = _auth.currentUser!.uid;
 String imageurl='https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=400';
-  Future<void> addUser(String name, String email) async {
+  Future<void> addUser(String name,String lastName, String email) async {
     final String username = email.split('@')[0];
+    final String fullName="$name $lastName";
+    final DateTime today = DateTime.now();
+  final DateTime onlyDate = DateTime(today.year, today.month, today.day);
     final user = UserModel(
-      name: name,
+      name: fullName,
       uid: uid,
       email: email,
       userName: username,
       bio: 'This is my bio',
       image: imageurl,
+      date: onlyDate,
     ).toMap();
 
     try {

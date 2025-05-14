@@ -46,7 +46,9 @@ class SignupProvider with ChangeNotifier {
     
        _userRepository.addUser(
         nameController.text.trim(),
-        emailController.text.trim(),);
+        seconNameController.text.trim(),
+        emailController.text.trim(),
+        );
       notifyListeners();
 
       WidgetsBinding.instance.addPostFrameCallback((_) {

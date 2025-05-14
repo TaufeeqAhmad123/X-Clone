@@ -8,6 +8,7 @@ class UserModel {
   final String userName;
   final String bio;
   final String image;
+  final DateTime date;
 
   UserModel(
     {
@@ -17,6 +18,7 @@ class UserModel {
    required  this.userName,
   required  this.bio,
   required  this.image,
+  required this.date
   });
 
   Map<String, dynamic> toMap() {
@@ -27,6 +29,7 @@ class UserModel {
       'userName': userName,
       'bio': bio,
       'image': image,
+      'date': date,
     };
   }
 factory UserModel.fromDocument(DocumentSnapshot doc){
@@ -37,6 +40,7 @@ factory UserModel.fromDocument(DocumentSnapshot doc){
     userName: doc['userName'] ?? '',
     bio: doc['bio'] ?? '',
     image: doc['image'] ?? '',
+    date: (doc['date'] as Timestamp).toDate(),
   );
 }
 }
