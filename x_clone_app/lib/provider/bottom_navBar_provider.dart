@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:x_clone_app/views/home.dart';
+import 'package:x_clone_app/views/home/home.dart';
 import 'package:x_clone_app/views/profile/profile_scareen.dart';
 
 class BottomNavbarProvider with ChangeNotifier {

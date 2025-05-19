@@ -1,8 +1,13 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/services.dart';
 
 import 'package:get/get.dart';
 import 'package:x_clone_app/Auth/Login/login.dart';
-import 'package:x_clone_app/views/home.dart';
+import 'package:x_clone_app/utils/Exception/firebase_auth_exception.dart';
+import 'package:x_clone_app/utils/Exception/firebase_exception.dart';
+import 'package:x_clone_app/utils/Exception/formate_exception.dart';
+import 'package:x_clone_app/utils/Exception/platfrom_exception.dart';
+import 'package:x_clone_app/views/home/home.dart';
 
 class AuthenticationRepository {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -27,16 +32,13 @@ class AuthenticationRepository {
       );
       return credential;
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'weak-password') {
-        print('The password provided is too weak.');
-      } else if (e.code == 'email-already-in-use') {
-        print('The account already exists for that email.');
-      } else if (e.code == 'invalid-email') {
-        print('The email address is badly formatted.');
-      } else {
-        print('Error: ${e.message}');
-      }
-      rethrow;
+      throw TFirebaseAuthException(e.code).message;
+    } on FirebaseException catch (e) {
+      throw TFirebaseException(e.code).message;
+    } on FormatException catch (_) {
+      throw const TFormatException();
+    } on PlatformException catch (e) {
+      throw TPlatformException(e.code).message;
     } catch (e) {
       print(e);
       throw Exception('An unknown error occurred during signup.');
@@ -50,25 +52,35 @@ class AuthenticationRepository {
         password: password,
       );
       return credential;
-    } on FirebaseAuthException catch (e) {
-      if (e.code == 'weak-password') {
-        print('The password provided is too weak.');
-      } else if (e.code == 'email-already-in-use') {
-        print('The account already exists for that email.');
-      } else if (e.code == 'invalid-email') {
-        print('The email address is badly formatted.');
-      } else {
-        print('Error: ${e.message}');
-      }
-      rethrow;
-    } catch (e) {
+    }on FirebaseAuthException catch (e) {
+      throw TFirebaseAuthException(e.code).message;
+    } on FirebaseException catch (e) {
+      throw TFirebaseException(e.code).message;
+    } on FormatException catch (_) {
+      throw const TFormatException();
+    } on PlatformException catch (e) {
+      throw TPlatformException(e.code).message;
+    }catch (e) {
       print(e);
       throw Exception('An unknown error occurred during signup.');
     }
   }
 
   Future<void> Logout() async {
-    await _auth.signOut();
+    try{
+      await  _auth.signOut();
+    }on FirebaseAuthException catch (e) {
+      throw TFirebaseAuthException(e.code).message;
+    } on FirebaseException catch (e) {
+      throw TFirebaseException(e.code).message;
+    } on FormatException catch (_) {
+      throw const TFormatException();
+    } on PlatformException catch (e) {
+      throw TPlatformException(e.code).message;
+    }catch (e) {
+      print(e);
+      throw Exception('An unknown error occurred during signup.');
+    }
   }
 
 

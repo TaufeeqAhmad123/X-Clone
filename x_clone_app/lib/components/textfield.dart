@@ -7,6 +7,7 @@ class CustomTextField extends StatelessWidget {
   final Icon? icon;
   final TextEditingController controller;
   final String labletext;
+  final String? Function(String?)? validator;
   bool isPassord;
 
   CustomTextField({
@@ -14,7 +15,7 @@ class CustomTextField extends StatelessWidget {
     required this.controller,
     required this.labletext,
     this.isPassord = false,
-    this.icon,
+    this.icon, this.validator,
   });
 
   @override
@@ -23,6 +24,7 @@ class CustomTextField extends StatelessWidget {
     return TextFormField(
       cursorColor: Colors.blue,
       controller: controller,
+      validator: validator,
       style: GoogleFonts.roboto(fontSize: 16, color: Colors.white),
       obscureText: isPassord ? !provider.isVisible : false,
       obscuringCharacter: '*',

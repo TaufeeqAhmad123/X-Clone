@@ -7,6 +7,7 @@ class UserModel {
   final String email;
   final String userName;
   final String bio;
+ 
   final String image;
   final DateTime date;
 

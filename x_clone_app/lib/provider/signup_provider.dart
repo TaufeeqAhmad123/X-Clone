@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:x_clone_app/Auth/repository/authentication_repository.dart';
 import 'package:x_clone_app/Auth/repository/user_repository.dart';
-import 'package:x_clone_app/model/user_model.dart';
+
 import 'package:x_clone_app/utils/loading_dialog.dart';
-import 'package:x_clone_app/utils/snackbar.dart';
+import 'package:x_clone_app/utils/Snackbar/snackbar.dart';
 import 'package:x_clone_app/views/authGate.dart';
 
 class SignupProvider with ChangeNotifier {
@@ -13,6 +13,7 @@ class SignupProvider with ChangeNotifier {
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController nameController = TextEditingController();
   final TextEditingController seconNameController = TextEditingController();
+  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
   bool _isLoading = false;
   bool _isVisible = false;
@@ -38,7 +39,11 @@ class SignupProvider with ChangeNotifier {
       _isLoading = true;
       showLoding();
       notifyListeners();
-
+      if (!formKey.currentState!.validate()) {
+        hideLoading();
+        _isLoading = false;
+        return;
+      }
       final user = await _authenticationRepository.Signup(
         emailController.text.trim(),
         passwordController.text.trim(),
@@ -52,8 +57,9 @@ class SignupProvider with ChangeNotifier {
       notifyListeners();
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        SnackbarUtil.showSuccess(context, 'Signup successful');
+        SnackbarUtil.successSnackBar(title: 'Success', message: 'Signup successful');
         Get.offAll(() => const Authgate());
+        clearFields();
         hideLoading();
       });
     } catch (e) {
@@ -62,7 +68,7 @@ class SignupProvider with ChangeNotifier {
       hideLoading();
       notifyListeners();
 
-      SnackbarUtil.showError(context, 'Login failed: ${e.toString()}');
+      SnackbarUtil.errorSnackBar(title: 'Error', message: e.toString());
     }
   }
 

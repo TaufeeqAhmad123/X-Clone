@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:x_clone_app/Auth/repository/authentication_repository.dart';
 import 'package:x_clone_app/utils/loading_dialog.dart';
-import 'package:x_clone_app/utils/snackbar.dart';
+import 'package:x_clone_app/utils/Snackbar/snackbar.dart';
 import 'package:x_clone_app/views/authGate.dart';
 
-import '../views/home.dart';
+import '../views/home/home.dart';
 
 class LoginProvider with ChangeNotifier {
   final TextEditingController emailController = TextEditingController();
@@ -15,6 +15,7 @@ class LoginProvider with ChangeNotifier {
   bool _isVisible = false;
   bool get isVisible => _isVisible;
   bool get isLoading => _isLoading;
+  GlobalKey<FormState> loginformKey = GlobalKey<FormState>();
   void toggleVisibility() {
     _isVisible = !_isVisible;
     notifyListeners();
@@ -30,6 +31,11 @@ class LoginProvider with ChangeNotifier {
       showLoding();
 
       notifyListeners();
+      if(!loginformKey.currentState!.validate()){
+        hideLoading();
+        _isLoading = false;
+        return;
+      }
 
       await _authenticationRepository.Login(
         emailController.text.trim(),
@@ -38,7 +44,10 @@ class LoginProvider with ChangeNotifier {
 
       notifyListeners();
 
-      SnackbarUtil.showSuccess(context, 'Signup successful');
+      SnackbarUtil.successSnackBar(
+        title: 'Success',
+        message: 'Login successful',
+      );
       Get.offAll(() => Authgate());
     } catch (e) {
       print(e);
@@ -46,7 +55,7 @@ class LoginProvider with ChangeNotifier {
       hideLoading();
       notifyListeners();
 
-      SnackbarUtil.showError(context, 'Login failed: ${e.toString()}');
+      SnackbarUtil.errorSnackBar(title: 'Error', message: e.toString());
     }
   }
 

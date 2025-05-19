@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:iconsax/iconsax.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:x_clone_app/Auth/repository/authentication_repository.dart';
+import 'package:x_clone_app/components/post_card.dart';
 import 'package:x_clone_app/model/user_model.dart';
 import 'package:x_clone_app/provider/user_provider.dart';
-import 'package:x_clone_app/views/home.dart';
+import 'package:x_clone_app/views/home/home.dart';
 
 class ProfileScareen extends StatefulWidget {
   const ProfileScareen({super.key});
@@ -20,6 +22,8 @@ class _ProfileScareenState extends State<ProfileScareen> {
   bool isLoading = true;
   UserModel? user;
   late final userProvider = Provider.of<Userprovider>(context, listen: false);
+  late final provider = Provider.of<Userprovider>(context);
+
   @override
   void initState() {
     super.initState();
@@ -28,17 +32,20 @@ class _ProfileScareenState extends State<ProfileScareen> {
 
   Future<void> loadUser() async {
     user = await userProvider.loadUSerData(uid);
+   
     setState(() {
       // user = userProvider.userModel;
       isLoading = false;
     });
+    
   }
 
   @override
   Widget build(BuildContext context) {
+    final allUserPost=provider.getAllPostForSingleuser(uid);
     print(user);
     return DefaultTabController(
-      length: 5,
+      length: 4,
       child: Scaffold(
         appBar: AppBar(
           leading: IconButton(
@@ -63,7 +70,6 @@ class _ProfileScareenState extends State<ProfileScareen> {
                           backgroundImage: NetworkImage(user!.image),
                         ),
                         Spacer(),
-
                       ],
                     ),
                     SizedBox(height: 10),
@@ -85,21 +91,24 @@ class _ProfileScareenState extends State<ProfileScareen> {
                       ),
                     ),
                     SizedBox(height: 10),
-                    Text(user!.bio,style: GoogleFonts.roboto(
-                            fontSize: 17,
-                            color: Colors.grey.shade900,
-                          ),),
+                    Text(
+                      user!.bio,
+                      style: GoogleFonts.roboto(
+                        fontSize: 17,
+                        color: Colors.grey.shade900,
+                      ),
+                    ),
                     SizedBox(height: 10),
                     Row(
                       children: [
-                        Icon(Icons.calendar_today_outlined,size: 16,),
+                        Icon(Icons.calendar_today_outlined, size: 16),
                         SizedBox(width: 5),
                         Text(
                           'Joined : ${DateFormat('MMMM d,y').format(user!.date)}',
                         ),
                       ],
                     ),
-                    SizedBox(height: 15), 
+                    SizedBox(height: 15),
                     Row(
                       children: [
                         Text(
@@ -138,26 +147,125 @@ class _ProfileScareenState extends State<ProfileScareen> {
                     SizedBox(height: 20),
                     TabBar(
                       tabs: [
-                        Tab(child: Text('Posts',style: GoogleFonts.roboto(color: Colors.black,fontWeight: FontWeight.w600,fontSize: 20),)),
-                        Tab(child: Text('Replies',style: GoogleFonts.roboto(color: Colors.black,fontWeight: FontWeight.w700))),
-                        Tab(child: Text('highlight',style: GoogleFonts.roboto(color: Colors.black,fontWeight: FontWeight.w700))),
-                        Tab(child: Text('Articals',style: GoogleFonts.roboto(color: Colors.black,fontWeight: FontWeight.w700))),
+                        Tab(
+                          child: Text(
+                            'Posts',
+                            style: GoogleFonts.roboto(
+                              color: Colors.black,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 20,
+                            ),
+                          ),
+                        ),
+                        Tab(
+                          child: Text(
+                            'Replies',
+                            style: GoogleFonts.roboto(
+                              color: Colors.black,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        Tab(
+                          child: Text(
+                            'highlight',
+                            style: GoogleFonts.roboto(
+                              color: Colors.black,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        Tab(
+                          child: Text(
+                            'Articals',
+                            style: GoogleFonts.roboto(
+                              color: Colors.black,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
                         //Tab(child: Text('Media',style: GoogleFonts.roboto(color: Colors.black,fontWeight: FontWeight.w700))),
                       ],
                     ),
                     Expanded(
-                      child: TabBarView(
-                        children: [
-                          TabBarView(
+                    child: TabBarView(
+                      children: [
+                        /// POSTS TAB
+                        ListView.builder(
+                          itemCount: allUserPost.length,
+                          itemBuilder: (context, index) {
+                            final post = allUserPost[index];
+                            return Card(
+                  
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                           
+                            CircleAvatar(radius: 20,backgroundColor: Colors.grey.shade400,child: Center(child: Icon(Iconsax.profile_add,color: Colors.black,),),),
+                             SizedBox(width: 10),
+                            Text(post.name,style: GoogleFonts.roboto(fontSize: 20,color: Colors.black,fontWeight: FontWeight.bold),),
+                             SizedBox(width: 10),
+                            Text('@${post.userName}',style: GoogleFonts.roboto(fontSize: 15,color: Colors.grey.shade800),),
+                             SizedBox(width: 10),
+                             Spacer(),
+                    
+                            // Text(post.timestamp),
+                            Icon(Icons.more_vert, color: Colors.grey.shade600),
+                          ],
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 50),
+                          child: Text(
+                            post.message,
+                            style: GoogleFonts.roboto(
+                              fontSize: 18,
+                              fontWeight: FontWeight.normal,
+                              letterSpacing: 1.2,
+                              color: Colors.black,
+                            ),
+                          ),
+                          //Text(provider.postsList.length[index].toString()),
+                        ),
+                        SizedBox(height: 10),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 50),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Center(child: Text('Home Tab')),
-                              Center(child: Text('Search Tab')),
-                              Center(child: Text('Profile Tab')),
+                              actionRow(icon: 'assets/chat.png', count: '9'),
+                              actionRow(icon: 'assets/tweet.png', count: '32'),
+                              actionRow(
+                                icon: 'assets/heart.png',
+                                count: post.likecounts.toString(),
+                              ),
+                    
+                              actionRow(icon: 'assets/bookmark.png', count: ''),
                             ],
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
+                  ),
+                );
+                          },
+                        ),
+
+                        /// REPLIES TAB
+                        Center(child: Text('Replies Tab')),
+
+                        /// HIGHLIGHT TAB
+                        Center(child: Text('Highlight Tab')),
+
+                        /// ARTICLES TAB
+                        Center(child: Text('Articles Tab')),
+                      ],
+                    ),),
                   ],
                 ),
               ),

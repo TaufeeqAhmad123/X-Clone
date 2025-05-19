@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:x_clone_app/Auth/SignUp/signup.dart';
 import 'package:x_clone_app/components/textfield.dart';
 import 'package:x_clone_app/provider/login_provider.dart';
+import 'package:x_clone_app/utils/validator/validator.dart';
 
 class TwitterLoginPage extends StatelessWidget {
   const TwitterLoginPage({super.key});
@@ -35,7 +36,11 @@ class TwitterLoginPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            CustomTextField(
+            Form(
+              key: provider.loginformKey,
+              child: Column(children: [
+              CustomTextField(
+                validator:(value)=> TValidator.validateEmail(value),
               // cursorColor: Colors.blue,
               controller: provider.emailController,
               labletext: 'Phone, email or @username',
@@ -44,10 +49,13 @@ class TwitterLoginPage extends StatelessWidget {
             SizedBox(height: 16),
             CustomTextField(
               // cursorColor: Colors.blue,
+              
+               validator: (value) => TValidator.validatePassword(value),
               controller: provider.passwordController,
               labletext: 'Password',
               isPassord: true,
             ),
+            ],)),
             const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,

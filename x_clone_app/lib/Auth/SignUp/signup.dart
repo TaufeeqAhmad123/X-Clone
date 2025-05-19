@@ -7,7 +7,8 @@ import 'package:x_clone_app/Auth/Login/login.dart';
 import 'package:x_clone_app/components/textfield.dart';
 
 import 'package:x_clone_app/provider/signup_provider.dart';
-import 'package:x_clone_app/views/home.dart';
+import 'package:x_clone_app/utils/validator/validator.dart';
+import 'package:x_clone_app/views/home/home.dart';
 
 class SignupScreen extends StatelessWidget {
   const SignupScreen({super.key});
@@ -37,9 +38,13 @@ class SignupScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            CustomTextField(
+            Form(
+              key: provider.formKey,
+              child: Column(children: [
+CustomTextField(
               // cursorColor: Colors.blue,
               controller: provider.nameController,
+              validator: (p0) => TValidator.validateEmptyText('First name',p0),
               labletext: 'First name',
               isPassord: false,
             ),
@@ -47,6 +52,7 @@ class SignupScreen extends StatelessWidget {
             CustomTextField(
               // cursorColor: Colors.blue,
               controller: provider.seconNameController,
+               validator: (p0) => TValidator.validateEmptyText('Second name',p0),
               labletext: 'second name',
               isPassord: false,
             ),
@@ -54,6 +60,7 @@ class SignupScreen extends StatelessWidget {
             CustomTextField(
               // cursorColor: Colors.blue,
               controller: provider.emailController,
+                  validator: (value)=>TValidator.validateEmail(value),
               labletext: 'Phone, email or @username',
               isPassord: false,
             ),
@@ -61,9 +68,11 @@ class SignupScreen extends StatelessWidget {
             CustomTextField(
               // cursorColor: Colors.blue,
               controller: provider.passwordController,
+              validator:(value)=> TValidator.validatePassword(value),
               labletext: 'Password',
               isPassord: true,
             ),
+            ],)),
             const SizedBox(height: 16),
 
             CupertinoButton(
