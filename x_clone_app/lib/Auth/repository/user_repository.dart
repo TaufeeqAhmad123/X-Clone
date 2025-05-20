@@ -248,6 +248,86 @@ class UserRepository {
     }
     return [];
   }
+  Future<void> repostUser(String postid,userId) async {
+    try {
+     final currentuserId=_auth.currentUser!.uid;
+
+     final report={
+        'postID': postid,
+        'postOwnerID': userId,
+        'reportedBy':currentuserId,
+        'timestamp':DateTime.now().toString(),
+     };
+         await _db.collection('report').add(report);
+    } on FirebaseAuthException catch (e) {
+      throw TFirebaseAuthException(e.code).message;
+    } on FirebaseException catch (e) {
+      throw TFirebaseException(e.code).message;
+    } on FormatException catch (_) {
+      throw const TFormatException();
+    } on PlatformException catch (e) {
+      throw TPlatformException(e.code).message;
+    } catch (e) {
+      print('Error getting posts: $e');
+    }
+    
+  }
+  Future<void> blockuser(String userId) async {
+    try {
+     final currentuserId=_auth.currentUser!.uid;
+
+         await _db.collection('user').doc(currentuserId).collection('BlockUser').doc(userId).set({});
+    } on FirebaseAuthException catch (e) {
+      throw TFirebaseAuthException(e.code).message;
+    } on FirebaseException catch (e) {
+      throw TFirebaseException(e.code).message;
+    } on FormatException catch (_) {
+      throw const TFormatException();
+    } on PlatformException catch (e) {
+      throw TPlatformException(e.code).message;
+    } catch (e) {
+      print('Error getting posts: $e');
+    }
+    
+  }
+  Future<void> Unblockuser(String blockuserId) async {
+    try {
+     final currentuserId=_auth.currentUser!.uid;
+
+         await _db.collection('user').doc(currentuserId).collection('BlockUser').doc(blockuserId).delete();
+    } on FirebaseAuthException catch (e) {
+      throw TFirebaseAuthException(e.code).message;
+    } on FirebaseException catch (e) {
+      throw TFirebaseException(e.code).message;
+    } on FormatException catch (_) {
+      throw const TFormatException();
+    } on PlatformException catch (e) {
+      throw TPlatformException(e.code).message;
+    } catch (e) {
+      print('Error getting posts: $e');
+    }
+    
+  }
+  Future<List<String>> getblockUserFromFirebase() async {
+    try {
+     final currentuserId=_auth.currentUser!.uid;
+
+      final snapshot=   await _db.collection('user').doc(currentuserId).collection('BlockUser').get();
+      return snapshot.docs.map((doc)=>doc.id).toList();
+    } on FirebaseAuthException catch (e) {
+      throw TFirebaseAuthException(e.code).message;
+    } on FirebaseException catch (e) {
+      throw TFirebaseException(e.code).message;
+    } on FormatException catch (_) {
+      throw const TFormatException();
+    } on PlatformException catch (e) {
+      throw TPlatformException(e.code).message;
+    } catch (e) {
+      print('Error getting posts: $e');
+    }
+    return [];
+    
+  }
 
   Future<String> uploadPostImage(String path, XFile image) async {
     final _storage = FirebaseStorage.instance;

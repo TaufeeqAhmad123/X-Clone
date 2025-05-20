@@ -1,10 +1,7 @@
-import 'dart:convert';
-import 'dart:io';
 
+import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
-import 'package:image_picker/image_picker.dart';
 import 'package:x_clone_app/Auth/repository/authentication_repository.dart';
 import 'package:x_clone_app/Auth/repository/user_repository.dart';
 import 'package:x_clone_app/model/commentModel.dart';
@@ -18,7 +15,7 @@ class Userprovider with ChangeNotifier {
   final _auth = AuthenticationRepository();
   final uid = FirebaseAuth.instance.currentUser!.uid;
   final _db = UserRepository();
-  bool _isLoaded = false;
+ 
   //get user data from firebase
   Future<UserModel?> loadUSerData(String uid) => _db.getUserDetails(uid);
 
@@ -96,12 +93,11 @@ class Userprovider with ChangeNotifier {
   //in map the string will store id and list will store the comments
   final Map<String, List<Commentmodel>> _comments = {};
   List<Commentmodel> getComments(String postID) => _comments[postID] ?? [];
-  
+
   Future<void> loadcomments(String postID) async {
     final allCommnets = await _db.getCommentsfromFirebase(postID);
     _comments[postID] = allCommnets;
     notifyListeners();
-    
   }
 
   //store comments in the post
@@ -110,11 +106,41 @@ class Userprovider with ChangeNotifier {
     await loadcomments(postID);
   }
 
-  Future<void> deleteCommets(String postID) async {
-    await _db.deletecommentOnPost(postID);
+  Future<void> deleteCommets(String commentID, String postID) async {
+    await _db.deletecommentOnPost(commentID);
     await loadcomments(postID);
   }
+
+  List<UserModel> _blockUser = [];
+  List<UserModel> get blockUser => _blockUser;
+//get all the block user from firebase
+  Future<void> loadBlockUserID() async {
+    final allBlockUserIDs = await _db.getblockUserFromFirebase();
+   final blockuserData=await Future.wait(allBlockUserIDs.map((id)=>_db.getUserDetails(id)));
+    _blockUser = blockuserData.whereType<UserModel>().toList();
+    notifyListeners();
+  }
+
+  Future<void> blockUserinFirebase(String userId) async {
+    await _db.blockuser(userId);
+    await loadBlockUserID();
+    await getAllPostFromFirebase();
+    notifyListeners();
+  }
+
+  Future<void> unblockUserfromFirebase(String userId) async {
+    await _db.Unblockuser(userId);
+    await loadBlockUserID();
+    await getAllPostFromFirebase();
+    notifyListeners();
+  }
+
+  Future<void> reportUser(String userId, postId) async {
+    await _db.repostUser(userId, postId);
+  }
 }
+
+
 
   // Future<void> uploadPostImage() async {
   //   final image = await ImagePicker().pickImage(

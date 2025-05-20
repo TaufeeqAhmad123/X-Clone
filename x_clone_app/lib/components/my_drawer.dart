@@ -119,7 +119,8 @@ class _MyDrawerState extends State<MyDrawer> {
             buildItem(
               text: 'Profile',
               image: 'assets/user.png',
-              onTap: () => Get.off(() => ProfileScareen()),
+              onTap: () {}
+              // Get.off(() => ProfileScareen()),
             ),
             buildItem(text: 'Premium', image: 'assets/logo.png', onTap: () {}),
             buildItem(

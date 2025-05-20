@@ -6,8 +6,10 @@ import 'package:provider/provider.dart';
 import 'package:x_clone_app/Auth/repository/authentication_repository.dart';
 import 'package:x_clone_app/components/bottommodelsheed.dart';
 import 'package:x_clone_app/components/post_card.dart';
+import 'package:x_clone_app/model/commentModel.dart';
 import 'package:x_clone_app/model/postModel.dart';
 import 'package:x_clone_app/provider/user_provider.dart';
+import 'package:x_clone_app/views/comments/widget/comment_tile.dart';
 import 'package:x_clone_app/views/profile/profile_scareen.dart';
 
 class CommentsScreen extends StatelessWidget {
@@ -29,6 +31,8 @@ class CommentsScreen extends StatelessWidget {
     final allComments = databaseprovider.getComments(post.id);
     int comments = databaseprovider.getComments(post.id).length;
     bool isCurrentUser = provider.isCurrentsUserLikePost(post.id);
+    
+
     return Scaffold(
       appBar: AppBar(title: Text('Comments')),
       body: ListView(
@@ -60,84 +64,7 @@ class CommentsScreen extends StatelessWidget {
                     itemCount: allComments.length,
                     itemBuilder: (context, index) {
                       final comment = allComments[index];
-                      return Container(
-                        child: Padding(
-                          padding: const EdgeInsets.all(10.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: [
-                                  GestureDetector(
-                                    onTap: () {
-                                      Get.to(() => ProfileScareen());
-                                    },
-                                    child: CircleAvatar(
-                                      radius: 20,
-                                      backgroundColor: Colors.grey.shade400,
-                                      child: Center(
-                                        child: Icon(
-                                          Iconsax.profile_add,
-                                          color: Colors.black,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  SizedBox(width: 10),
-                                  Text(
-                                    comment.name,
-                                    style: GoogleFonts.roboto(
-                                      fontSize: 20,
-                                      color: Colors.black,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  SizedBox(width: 10),
-                                  Text(
-                                    '@${comment.userName}',
-                                    style: GoogleFonts.roboto(
-                                      fontSize: 15,
-                                      color: Colors.grey.shade800,
-                                    ),
-                                  ),
-                                  SizedBox(width: 10),
-                                  Spacer(),
-                          
-                                  // Text(post.timestamp),
-                                  IconButton(
-                                    onPressed: () => {
-                                      bottomSheet().showOptions(
-                                        context,
-                                        post,
-                                        provider,
-                                      ),
-                                    },
-                                    icon: (Icon(
-                                      Icons.more_vert,
-                                      color: Colors.grey.shade800,
-                                    )),
-                                  ),
-                                ],
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.only(left: 50),
-                                child: Text(
-                                  comment.message,
-                                  style: GoogleFonts.roboto(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.normal,
-                                    letterSpacing: 1.2,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              ),
-                              SizedBox(height: 10),
-                            ],
-                          ),
-                        ),
-                      );
+                      return CommentTile(post: post, comment: comment);
                     },
                   ),
                 ),
@@ -146,6 +73,8 @@ class CommentsScreen extends StatelessWidget {
     );
   }
 }
+
+
 
 class PostTile extends StatelessWidget {
   PostTile({
@@ -176,7 +105,7 @@ class PostTile extends StatelessWidget {
             children: [
               GestureDetector(
                 onTap: () {
-                  Get.to(() => ProfileScareen());
+                  Get.to(() => ProfileScareen(post: post,uid: post.uid,));
                 },
                 child: CircleAvatar(
                   radius: 20,

@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -8,6 +7,7 @@ import 'package:x_clone_app/Auth/repository/authentication_repository.dart';
 import 'package:x_clone_app/components/bottommodelsheed.dart';
 import 'package:x_clone_app/model/postModel.dart';
 import 'package:x_clone_app/provider/user_provider.dart';
+import 'package:x_clone_app/utils/Snackbar/snackbar.dart';
 import 'package:x_clone_app/views/comments/comments_screen.dart';
 import 'package:x_clone_app/views/profile/profile_scareen.dart';
 
@@ -23,7 +23,10 @@ class postCard extends StatefulWidget {
 
 class _postCardState extends State<postCard> {
   late final provider = Provider.of<Userprovider>(context);
-  late final databaseProvider = Provider.of<Userprovider>(context,listen: false);
+  late final databaseProvider = Provider.of<Userprovider>(
+    context,
+    listen: false,
+  );
   @override
   initState() {
     super.initState();
@@ -42,7 +45,68 @@ class _postCardState extends State<postCard> {
 
       final bool isCurrentUser = uid == currentUserId;
       print('post id${widget.post.id}');
-
+void showConfirmationReportDialog() {
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text('Report Post'),
+            content: Text('Are you sure you want to report this post?'),
+            actions: [
+              TextButton(
+                onPressed: () async{
+                 
+                  Navigator.pop(context);
+                  await databaseProvider.reportUser(widget.post.uid,widget.post.id);
+                  SnackbarUtil.successSnackBar(
+                   title:  'Success',
+                 message:    'Post reported successfully',
+                  );
+                },
+                child: Text('Report'),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: Text('Cancel'),
+              ),
+            ],
+          );
+        },
+      );
+    }
+void showConfirmationBlockDialog() {
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text('Report Post'),
+            content: Text('Are you sure you want to block this post?'),
+            actions: [
+              TextButton(
+                onPressed: () async{
+                 
+                  Navigator.pop(context);
+                  await databaseProvider.blockUserinFirebase(widget.post.uid);
+                  SnackbarUtil.successSnackBar(
+                   title:  'Success',
+                 message:    'Post Block successfully',
+                  );
+                },
+                child: Text('Block'),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: Text('Cancel'),
+              ),
+            ],
+          );
+        },
+      );
+    }
       showModalBottomSheet(
         context: context,
         builder: (context) {
@@ -54,7 +118,7 @@ class _postCardState extends State<postCard> {
                     leading: Icon(Iconsax.trash, color: Colors.black),
                     title: Text('Delete Post'),
                     onTap: () async {
-                      await provider.deletepost(widget.post.id);
+                      await databaseProvider.deletepost(widget.post.id);
                       // await AuthenticationRepository().deletepost(widget.post.uid);
                       Navigator.pop(context);
                     },
@@ -63,17 +127,16 @@ class _postCardState extends State<postCard> {
                   ListTile(
                     leading: Icon(Icons.flag, color: Colors.black),
                     title: Text('Report'),
-                    onTap: () async {
-                      Navigator.pop(context);
-                    },
+                    onTap:
+                      showConfirmationReportDialog,
+                    //  Navigator.pop(context);
+                    
+                     
                   ),
                   ListTile(
                     leading: Icon(Icons.block, color: Colors.black),
                     title: Text('Block User'),
-                    onTap: () async {
-                      // await AuthenticationRepository().deletepost(widget.post.uid);
-                      Navigator.pop(context);
-                    },
+                    onTap: showConfirmationBlockDialog,
                   ),
                 ],
                 ListTile(
@@ -92,9 +155,10 @@ class _postCardState extends State<postCard> {
     }
 
     void toggleLike() async {
-      await provider.likePost(widget.post.id);
+      await databaseProvider.likePost(widget.post.id);
     }
 
+    late final provider = Provider.of<Userprovider>(context);
     bool isCurrentUser = provider.isCurrentsUserLikePost(widget.post.id);
     int comments = databaseProvider.getComments(widget.post.id).length;
     print('comments length $comments');
@@ -116,7 +180,12 @@ class _postCardState extends State<postCard> {
                 children: [
                   GestureDetector(
                     onTap: () {
-                      Get.to(() => ProfileScareen());
+                      Get.to(
+                        () => ProfileScareen(
+                          post: widget.post,
+                          uid: widget.post.uid,
+                        ),
+                      );
                     },
                     child: CircleAvatar(
                       radius: 20,
@@ -127,12 +196,20 @@ class _postCardState extends State<postCard> {
                     ),
                   ),
                   SizedBox(width: 10),
-                  Text(
-                    widget.post.name,
-                    style: GoogleFonts.roboto(
-                      fontSize: 20,
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
+                  GestureDetector(
+                    onTap: () => Get.to(
+                      () => ProfileScareen(
+                        post: widget.post,
+                        uid: widget.post.uid,
+                      ),
+                    ),
+                    child: Text(
+                      widget.post.name,
+                      style: GoogleFonts.roboto(
+                        fontSize: 20,
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   SizedBox(width: 10),

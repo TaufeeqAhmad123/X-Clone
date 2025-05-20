@@ -16,7 +16,7 @@ class BottomNavbarProvider with ChangeNotifier {
     HomeScreen(),
     const Center(child: Text("Search")),
     const Center(child: Text("Notifications")),
-    ProfileScareen(),
+    ProfileScareen(post:null,uid: '',),
   ];
   List<Widget> get screens => _screens;
 }
