@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:x_clone_app/Auth/Login/login.dart';
 import 'package:x_clone_app/Auth/SignUp/signup.dart';
 import 'package:x_clone_app/Auth/repository/authentication_repository.dart';
@@ -12,10 +13,16 @@ import 'package:x_clone_app/provider/login_provider.dart';
 import 'package:x_clone_app/provider/signup_provider.dart';
 import 'package:x_clone_app/provider/user_provider.dart';
 import 'package:x_clone_app/views/authGate.dart';
+//
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await Supabase.initialize(
+    url: 'https://nuaeiuvcwtqpeueszeps.supabase.co',
+    anonKey:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im51YWVpdXZjd3RxcGV1ZXN6ZXBzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc4NDc2NzAsImV4cCI6MjA2MzQyMzY3MH0.PWh2vie2Fqz32q0lQncmmkC7FClMPzduZhz8EgfhDiE',
+  );
 
   runApp(
     MultiProvider(

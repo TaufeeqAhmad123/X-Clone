@@ -8,6 +8,7 @@ import 'package:x_clone_app/components/bottommodelsheed.dart';
 import 'package:x_clone_app/model/postModel.dart';
 import 'package:x_clone_app/provider/user_provider.dart';
 import 'package:x_clone_app/utils/Snackbar/snackbar.dart';
+import 'package:x_clone_app/utils/dialoag/confirmation_dialog.dart';
 import 'package:x_clone_app/views/comments/comments_screen.dart';
 import 'package:x_clone_app/views/profile/profile_scareen.dart';
 
@@ -45,68 +46,7 @@ class _postCardState extends State<postCard> {
 
       final bool isCurrentUser = uid == currentUserId;
       print('post id${widget.post.id}');
-void showConfirmationReportDialog() {
-      showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: Text('Report Post'),
-            content: Text('Are you sure you want to report this post?'),
-            actions: [
-              TextButton(
-                onPressed: () async{
-                 
-                  Navigator.pop(context);
-                  await databaseProvider.reportUser(widget.post.uid,widget.post.id);
-                  SnackbarUtil.successSnackBar(
-                   title:  'Success',
-                 message:    'Post reported successfully',
-                  );
-                },
-                child: Text('Report'),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                child: Text('Cancel'),
-              ),
-            ],
-          );
-        },
-      );
-    }
-void showConfirmationBlockDialog() {
-      showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: Text('Report Post'),
-            content: Text('Are you sure you want to block this post?'),
-            actions: [
-              TextButton(
-                onPressed: () async{
-                 
-                  Navigator.pop(context);
-                  await databaseProvider.blockUserinFirebase(widget.post.uid);
-                  SnackbarUtil.successSnackBar(
-                   title:  'Success',
-                 message:    'Post Block successfully',
-                  );
-                },
-                child: Text('Block'),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                child: Text('Cancel'),
-              ),
-            ],
-          );
-        },
-      );
-    }
+    
       showModalBottomSheet(
         context: context,
         builder: (context) {
@@ -127,16 +67,49 @@ void showConfirmationBlockDialog() {
                   ListTile(
                     leading: Icon(Icons.flag, color: Colors.black),
                     title: Text('Report'),
-                    onTap:
-                      showConfirmationReportDialog,
+                    onTap: () => AppDialog().showConfirmationDialod(
+                      'Report Post',
+                      'Are you sure to report the post',
+
+                      'Report ',
+                      'cancel',
+                      context,
+                      () async {
+                        await databaseProvider.reportUser(
+                          widget.post.uid,
+                          widget.post.id,
+                        );
+                        SnackbarUtil.successSnackBar(
+                          title: 'Success',
+                          message: 'Post reported successfully',
+                        );
+                        Navigator.pop(context);
+                      },
+                      () => Navigator.pop(context),
+                    ),
+
                     //  Navigator.pop(context);
-                    
-                     
                   ),
                   ListTile(
                     leading: Icon(Icons.block, color: Colors.black),
                     title: Text('Block User'),
-                    onTap: showConfirmationBlockDialog,
+                     onTap: () => AppDialog().showConfirmationDialod(
+                      'Block User',
+                      'Are you sure to Block the Uaer',
+
+                      'Unblock ',
+                      'cancel',
+                      context,
+                      () async {
+                        await databaseProvider.blockUserinFirebase(widget.post.uid);
+                        SnackbarUtil.successSnackBar(
+                          title: 'Success',
+                          message: 'User Block successfully',
+                        );
+                        Navigator.pop(context);
+                      },
+                      () => Navigator.pop(context),
+                    ),
                   ),
                 ],
                 ListTile(

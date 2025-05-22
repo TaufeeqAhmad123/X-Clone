@@ -14,8 +14,8 @@ import 'package:x_clone_app/views/home/home.dart';
 
 class ProfileScareen extends StatefulWidget {
   final Postmodel? post;
-  final  String uid;
- const ProfileScareen({super.key, required this.post, required this.uid});
+  final String uid;
+  const ProfileScareen({super.key, required this.post, required this.uid});
 
   @override
   State<ProfileScareen> createState() => _ProfileScareenState();
@@ -32,12 +32,12 @@ class _ProfileScareenState extends State<ProfileScareen> {
   @override
   void initState() {
     super.initState();
- 
+
     loadUser();
   }
 
   Future<void> loadUser() async {
-    user = await userProvider.loadUSerData(widget.uid);
+    user = await userProvider.loadUSerData(currentID);
 
     setState(() {
       // user = userProvider.userModel;
@@ -47,7 +47,8 @@ class _ProfileScareenState extends State<ProfileScareen> {
 
   @override
   Widget build(BuildContext context) {
-    final allUserPost = provider.getAllPostForSingleuser(widget.uid);
+    final allUserPost = provider.getAllPostForSingleuser(currentID);
+
     print(user);
     return DefaultTabController(
       length: 4,
@@ -103,6 +104,7 @@ class _ProfileScareenState extends State<ProfileScareen> {
                         color: Colors.grey.shade900,
                       ),
                     ),
+
                     SizedBox(height: 10),
                     Row(
                       children: [
@@ -232,6 +234,7 @@ class _ProfileScareenState extends State<ProfileScareen> {
                                               fontWeight: FontWeight.bold,
                                             ),
                                           ),
+
                                           SizedBox(width: 10),
                                           Text(
                                             '@${post.userName}',
@@ -265,6 +268,38 @@ class _ProfileScareenState extends State<ProfileScareen> {
                                         ),
                                         //Text(provider.postsList.length[index].toString()),
                                       ),
+                                      if (post.image.isNotEmpty) ...[
+                                        const SizedBox(height: 12),
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                          child: Image.network(
+                                            post.image,
+                                            width: double.infinity,
+                                            height: 200,
+                                            fit: BoxFit.cover,
+                                            loadingBuilder:
+                                                (
+                                                  context,
+                                                  child,
+                                                  loadingProgress,
+                                                ) {
+                                                  if (loadingProgress == null)
+                                                    return child;
+                                                  return const Center(
+                                                    child:
+                                                        CircularProgressIndicator(),
+                                                  );
+                                                },
+                                            errorBuilder:
+                                                (context, error, stackTrace) =>
+                                                    const Text(
+                                                      'Image failed to load',
+                                                    ),
+                                          ),
+                                        ),
+                                      ],
                                       SizedBox(height: 10),
                                       Padding(
                                         padding: const EdgeInsets.only(
@@ -276,15 +311,49 @@ class _ProfileScareenState extends State<ProfileScareen> {
                                           children: [
                                             actionRow(
                                               icon: 'assets/chat.png',
-                                              count: '9',
+                                              count: provider.getComments(post.id)
+                                                  .length
+                                                  .toString(),
                                             ),
                                             actionRow(
                                               icon: 'assets/tweet.png',
                                               count: '32',
                                             ),
-                                            actionRow(
-                                              icon: 'assets/heart.png',
-                                              count: post.likecounts.toString(),
+                                            Row(
+                                              children: [
+                                                IconButton(
+                                                  onPressed: () {
+                                                  
+                                                  },
+                                                  icon:provider.getLikeCount(post.id)==0 ? Icon(
+                                                    Icons.favorite_border,
+                                                    color: Colors.grey.shade800,
+                                                  ) : Icon(
+                                                    Icons.favorite,
+                                                    color: Colors.red,
+                                                  ),
+                                                ),
+                                                Consumer<Userprovider>(
+                                                  builder: (context, value, _) {
+                                                    return Text(
+                                                      value.getLikeCount(
+                                                                post.id,
+                                                              ) !=
+                                                              0
+                                                          ? value
+                                                                .getLikeCount(
+                                                                  post.id,
+                                                                )
+                                                                .toString()
+                                                          : '',
+                                                      style: GoogleFonts.roboto(
+                                                        fontSize: 18,
+                                                        color: Colors.black,
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
+                                              ],
                                             ),
 
                                             actionRow(

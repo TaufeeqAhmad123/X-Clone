@@ -107,6 +107,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                               ),
                               onPressed: () {
+                             
                                 postMessage();
                                 Navigator.pop(context);
                               },
@@ -149,7 +150,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ),
                         SizedBox(height: 20),
-                        if (provider.selectedImage != null)
+                        if (provider.imageFile != null)
                           Container(
                             height: 200,
                             width: double.infinity,
@@ -157,7 +158,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(15),
                               image: DecorationImage(
-                                image: FileImage(provider.selectedImage!),
+                                image: FileImage(provider.imageFile!),
                                 fit: BoxFit.cover,
                               ),
                             ),
@@ -165,7 +166,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         Spacer(),
                         GestureDetector(
                           onTap: () {
-                            //    userProvider.uploadPostImage();
+                                userProvider.pickimage();
                           },
                           child: Container(
                             height: 70,

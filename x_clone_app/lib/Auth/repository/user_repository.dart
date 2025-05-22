@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:x_clone_app/model/commentModel.dart';
 import 'package:x_clone_app/model/postModel.dart';
 import 'package:x_clone_app/model/user_model.dart';
@@ -12,6 +13,7 @@ import 'package:x_clone_app/utils/Exception/firebase_auth_exception.dart';
 import 'package:x_clone_app/utils/Exception/firebase_exception.dart';
 import 'package:x_clone_app/utils/Exception/formate_exception.dart';
 import 'package:x_clone_app/utils/Exception/platfrom_exception.dart';
+import 'package:x_clone_app/utils/Snackbar/snackbar.dart';
 
 class UserRepository {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -60,6 +62,36 @@ class UserRepository {
           .doc(uid)
           .get();
       return UserModel.fromDocument(snapshot);
+    } on FirebaseAuthException catch (e) {
+      throw TFirebaseAuthException(e.code).message;
+    } on FirebaseException catch (e) {
+      throw TFirebaseException(e.code).message;
+    } on FormatException catch (_) {
+      throw const TFormatException();
+    } on PlatformException catch (e) {
+      throw TPlatformException(e.code).message;
+    } catch (e) {
+      print('Error getting user details: $e');
+      return null;
+    }
+  }
+  Future<void> deleteuserDetail(String uid) async {
+    try {
+      WriteBatch batch=_db.batch();
+      DocumentReference userDoc=_db.collection('user').doc(uid);
+      batch.delete(userDoc);
+      QuerySnapshot postDoc= await  _db.collection('post').where('uid', isEqualTo:uid ).get();
+      for(var post in postDoc.docs){
+          batch.delete(post.reference);
+      }
+      QuerySnapshot commentDoc= await  _db.collection('comments').where('uid', isEqualTo:uid ).get();
+      for(var post in commentDoc.docs){
+          batch.delete(post.reference);
+      }
+   
+  await batch.commit();
+     
+
     } on FirebaseAuthException catch (e) {
       throw TFirebaseAuthException(e.code).message;
     } on FirebaseException catch (e) {
@@ -329,26 +361,29 @@ class UserRepository {
     
   }
 
-  Future<String> uploadPostImage(String path, XFile image) async {
-    final _storage = FirebaseStorage.instance;
-    try {
-      final ref = _storage.ref(path).child(image.name);
-      await ref.putFile(File(image.path));
-      final imageUrl = await ref.getDownloadURL();
-      return imageUrl;
-    } on FirebaseAuthException catch (e) {
-      throw TFirebaseAuthException(e.code).message;
-    } on FirebaseException catch (e) {
-      throw TFirebaseException(e.code).message;
-    } on FormatException catch (_) {
-      throw const TFormatException();
-    } on PlatformException catch (e) {
-      throw TPlatformException(e.code).message;
-    } catch (e) {
-      print('Error getting posts: $e');
-      throw 'Something went wrong. Please try again';
-    }
-  }
+  Future<String> uploadImageToSupabase(File image) async {
+  final fieldName = DateTime.now().microsecondsSinceEpoch.toString();
+  final path = 'post/$fieldName.jpg';
 
-  String api = 'd9a2b3a1da30c0ab3eb1984a38bcd40d';
+  try {
+    final storage = Supabase.instance.client.storage;
+    
+    await storage.from('images').upload(path, image);
+    
+    SnackbarUtil.successSnackBar(
+      title: 'Image uploaded',
+      message: 'Image uploaded successfully',
+    );
+
+    final imageUrl = storage.from('images').getPublicUrl(path);
+    return imageUrl;
+
+  } catch (e) {
+    print('Upload Error: $e');
+    rethrow; // Or show error Snackbar
+  }
+}
+
+
+ 
 }

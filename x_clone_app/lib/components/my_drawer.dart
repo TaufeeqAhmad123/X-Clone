@@ -6,7 +6,8 @@ import 'package:x_clone_app/Auth/Login/login.dart';
 import 'package:x_clone_app/Auth/repository/authentication_repository.dart';
 import 'package:x_clone_app/model/user_model.dart';
 import 'package:x_clone_app/provider/user_provider.dart';
-import 'package:x_clone_app/views/profile/profile_scareen.dart';
+import 'package:x_clone_app/views/setting/setting.dart';
+
 
 class MyDrawer extends StatefulWidget {
   const MyDrawer({super.key});
@@ -28,7 +29,7 @@ class _MyDrawerState extends State<MyDrawer> {
 
   Future<void> loadUser() async {
    
-   user= await userProvider.loadUSerData(uid);
+  user= await userProvider.loadUSerData(uid);
     setState(() {
      // user = userProvider.userModel;
       isLoading = false;
@@ -52,10 +53,12 @@ class _MyDrawerState extends State<MyDrawer> {
               children: [
                 CircleAvatar(
                   radius: 40,
-                  backgroundImage: Image.network(user!.image).image
+                  backgroundImage: user?.image != null
+                      ? NetworkImage(user!.image!)
+                      : const AssetImage('assets/user.png',) as ImageProvider,
                 ),
                 Spacer(),
-                Icon(Icons.settings, color: Colors.black),
+                IconButton(icon: Icon(Icons.settings, color: Colors.black),onPressed: () => Get.offAll(()=>SettingScreen()),),
               ],
             ),
             SizedBox(height: 10),
@@ -66,7 +69,7 @@ class _MyDrawerState extends State<MyDrawer> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        user!.name,
+                        user?.name ?? '',
                         style: GoogleFonts.kanit(
                           color: Colors.black,
                           fontSize: 20,
@@ -74,7 +77,7 @@ class _MyDrawerState extends State<MyDrawer> {
                         ),
                       ),
                       Text(
-                        '@${user!.userName}',
+                        '@${user?.userName}'?? "",
                         style: GoogleFonts.kanit(
                           color: Colors.grey.shade700,
                           fontSize: 16,

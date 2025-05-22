@@ -1,7 +1,7 @@
-
 import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:x_clone_app/Auth/repository/authentication_repository.dart';
 import 'package:x_clone_app/Auth/repository/user_repository.dart';
 import 'package:x_clone_app/model/commentModel.dart';
@@ -11,11 +11,11 @@ import 'package:x_clone_app/model/user_model.dart';
 class Userprovider with ChangeNotifier {
   UserModel? userModel;
   String? _postImageUrl;
-  File? selectedImage;
+  File? imageFile;
   final _auth = AuthenticationRepository();
   final uid = FirebaseAuth.instance.currentUser!.uid;
   final _db = UserRepository();
- 
+
   //get user data from firebase
   Future<UserModel?> loadUSerData(String uid) => _db.getUserDetails(uid);
 
@@ -113,10 +113,12 @@ class Userprovider with ChangeNotifier {
 
   List<UserModel> _blockUser = [];
   List<UserModel> get blockUser => _blockUser;
-//get all the block user from firebase
+  //get all the block user from firebase
   Future<void> loadBlockUserID() async {
     final allBlockUserIDs = await _db.getblockUserFromFirebase();
-   final blockuserData=await Future.wait(allBlockUserIDs.map((id)=>_db.getUserDetails(id)));
+    final blockuserData = await Future.wait(
+      allBlockUserIDs.map((id) => _db.getUserDetails(id)),
+    );
     _blockUser = blockuserData.whereType<UserModel>().toList();
     notifyListeners();
   }
@@ -130,6 +132,7 @@ class Userprovider with ChangeNotifier {
 
   Future<void> unblockUserfromFirebase(String userId) async {
     await _db.Unblockuser(userId);
+
     await loadBlockUserID();
     await getAllPostFromFirebase();
     notifyListeners();
@@ -138,66 +141,27 @@ class Userprovider with ChangeNotifier {
   Future<void> reportUser(String userId, postId) async {
     await _db.repostUser(userId, postId);
   }
-}
 
+  Future<void> pickimage() async {
+    final ImagePicker picker=ImagePicker();
+    final XFile? image=await picker.pickImage(  source: ImageSource.gallery,
+      imageQuality: 70,
+      maxHeight: 512,
+      maxWidth: 512);
+    if(image!=null){
+      imageFile=File(image.path);
+      notifyListeners();
+        final url= await _db.uploadImageToSupabase(imageFile!);
+    _postImageUrl=url;
 
-
-  // Future<void> uploadPostImage() async {
-  //   final image = await ImagePicker().pickImage(
-  //     source: ImageSource.gallery,
-  //     imageQuality: 70,
-  //     maxHeight: 512,
-  //     maxWidth: 512,
-  //   );
-  //   if (image != null) {
-  //     selectedImage = File(image.path);
-  //     notifyListeners();
-  //     // final uploadImage=await _db.uploadPostImage('Posts', image);
-  //     //  _postImageUrl = uploadImage;
-  //   }
-  // }
-
-  // Future<void>uploadPostImage()async{
-  //   final image=await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 70, maxHeight: 512, maxWidth: 512);
-  //   if(image!=null){
-  //    selectedImage=File(image.path);
-  //     notifyListeners();
-  //    // final uploadImage=await _db.uploadPostImage('Posts', image);
-  //    //  _postImageUrl = uploadImage;
-
-  //   }
-
-  // }
-
-  // 🚀 Upload to imgbb and Firestore
-  // Future<void> postToFirestore(String message) async {
-  //   if (selectedImage == null) {
-  //     debugPrint("No image selected");
-  //     return;
-  //   }
-
-  //   final apiKey =
-  //       'd9a2b3a1da30c0ab3eb1984a38bcd40d'; // 🔐 Replace with your imgbb key
-  //   final url = Uri.parse('https://api.imgbb.com/1/upload?key=$apiKey');
-
-  //   final request = http.MultipartRequest('POST', url);
-  //   request.files.add(
-  //     await http.MultipartFile.fromPath('image', selectedImage!.path),
-  //   );
-
-  //   final response = await request.send();
-  //   if (response.statusCode == 200) {
-  //     final resStr = await response.stream.bytesToString();
-  //     final resJson = jsonDecode(resStr);
-  //     _postImageUrl = resJson['data']['url']; // ✅ assign to class field
-  //     print('Here is the image URL: $_postImageUrl');
-
-  //     // ✅ Save to Firestore
-
-  //     debugPrint("Post uploaded successfully!");
-  //   } else {
-  //     debugPrint("Image upload failed with status: ${response.statusCode}");
-  //   }
-  // // }
+     imageFile = null;
+    
+    notifyListeners();
+   print('image url is $url');
+    }
+   
+    
+  }
+ 
   
-
+}

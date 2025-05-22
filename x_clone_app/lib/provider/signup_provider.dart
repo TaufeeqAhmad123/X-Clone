@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'package:x_clone_app/Auth/repository/authentication_repository.dart';
 import 'package:x_clone_app/Auth/repository/user_repository.dart';
 
-import 'package:x_clone_app/utils/loading_dialog.dart';
+import 'package:x_clone_app/utils/dialoag/loading_dialog.dart';
 import 'package:x_clone_app/utils/Snackbar/snackbar.dart';
 import 'package:x_clone_app/views/authGate.dart';
 

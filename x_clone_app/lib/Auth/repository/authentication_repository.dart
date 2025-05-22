@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import 'package:get/get.dart';
 import 'package:x_clone_app/Auth/Login/login.dart';
+import 'package:x_clone_app/Auth/repository/user_repository.dart';
 import 'package:x_clone_app/utils/Exception/firebase_auth_exception.dart';
 import 'package:x_clone_app/utils/Exception/firebase_exception.dart';
 import 'package:x_clone_app/utils/Exception/formate_exception.dart';
@@ -82,7 +83,29 @@ class AuthenticationRepository {
       throw Exception('An unknown error occurred during signup.');
     }
   }
+Future<void> deleteUserAccount() async {
+    final user=_auth.currentUser;
+   
+    try {
+      if(user != null) {
+await UserRepository().deleteuserDetail(user.uid);
+        await user.delete();
 
+      }
+      
+    } on FirebaseAuthException catch (e) {
+      throw TFirebaseAuthException(e.code).message;
+    } on FirebaseException catch (e) {
+      throw TFirebaseException(e.code).message;
+    } on FormatException catch (_) {
+      throw const TFormatException();
+    } on PlatformException catch (e) {
+      throw TPlatformException(e.code).message;
+    } catch (e) {
+      print('Error getting posts: $e');
+      throw 'Something went wrong. Please try again';
+    }
+  }
 
 
 
