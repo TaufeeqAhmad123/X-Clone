@@ -11,11 +11,14 @@ import 'package:x_clone_app/model/postModel.dart';
 import 'package:x_clone_app/model/user_model.dart';
 import 'package:x_clone_app/provider/user_provider.dart';
 import 'package:x_clone_app/views/home/home.dart';
+import 'package:x_clone_app/views/profile/edit_profile.dart';
+import 'package:x_clone_app/views/profile/followersList.dart';
+import 'package:x_clone_app/views/profile/widget/folloersRow.dart';
 
 class ProfileScareen extends StatefulWidget {
-  final Postmodel? post;
+  
   final String uid;
-  const ProfileScareen({super.key, required this.post, required this.uid});
+  const ProfileScareen({super.key,  required this.uid});
 
   @override
   State<ProfileScareen> createState() => _ProfileScareenState();
@@ -25,29 +28,52 @@ class _ProfileScareenState extends State<ProfileScareen> {
   final String currentID = AuthenticationRepository().getCurrentUid();
 
   bool isLoading = true;
-  UserModel? user;
-  late final userProvider = Provider.of<Userprovider>(context, listen: false);
-  late final provider = Provider.of<Userprovider>(context);
+  
+  late Userprovider userProvider;
 
-  @override
-  void initState() {
-    super.initState();
+@override
+void initState() {
+  super.initState();
+  userProvider = Provider.of<Userprovider>(context, listen: false);
+  loadData();
+}
+bool _isFollowing = false;
 
-    loadUser();
-  }
-
-  Future<void> loadUser() async {
-    user = await userProvider.loadUSerData(currentID);
-
+  Future<void> loadData() async {
+     await userProvider.loadUSerData(widget.uid);
+    await userProvider.loadFollowers(widget.uid);
+    await userProvider.loadFollowings(widget.uid);
+  final  following =await userProvider.fetchIsCurrentUserFollowing(widget.uid);
+   // toggleFollow()  ;
     setState(() {
       // user = userProvider.userModel;
       isLoading = false;
+      _isFollowing=following;
+    
+    });
+  }
+
+  //toggle the follow button
+  Future<void> toggleFollow() async {
+    if (_isFollowing) {
+      await userProvider.unfollowUser(widget.uid);
+    } else {
+      await userProvider.followUser(widget.uid);
+    }
+    setState(() {
+      _isFollowing = !_isFollowing;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final allUserPost = provider.getAllPostForSingleuser(currentID);
+     final provider = Provider.of<Userprovider>(context);
+     final user=provider.user;
+    final allUserPost = provider.getAllPostForSingleuser(widget.uid);
+    final followerCount=provider.getFollowersCount(widget.uid);
+    final followingCount=provider.getFollowingCount(widget.uid);
+    
+  //  _isFollowing = provider.isCurrentUserFollowing(widget.uid);
 
     print(user);
     return DefaultTabController(
@@ -58,7 +84,7 @@ class _ProfileScareenState extends State<ProfileScareen> {
             onPressed: () => Get.off(() => BottomNavBar()),
             icon: Icon(Icons.arrow_back),
           ),
-          title: Text(isLoading || user == null ? 'Loading...' : (user!.name)),
+          title: Text(isLoading || user == null ? 'Loading...' : (user.name)),
         ),
         body: isLoading || user == null
             ? const Center(child: CircularProgressIndicator())
@@ -68,28 +94,56 @@ class _ProfileScareenState extends State<ProfileScareen> {
                   // mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 50),
                     Row(
                       children: [
                         CircleAvatar(
                           radius: 50,
-                          backgroundImage: NetworkImage(user!.image),
+                          backgroundImage: NetworkImage(user.image),
                         ),
                         Spacer(),
                       ],
                     ),
                     SizedBox(height: 10),
-                    Text(
-                      user!.name,
-                      style: GoogleFonts.roboto(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1.2,
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          user!.name,
+                          style: GoogleFonts.roboto(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                        Spacer(),
+                      ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  Colors.black,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(50),
+                              ),
+                             
+                              fixedSize: Size(
+                                125,
+                                50,
+                              ),
+                            ),
+                            onPressed: ()=>Get.to(()=>EditProfileScreen(uid:widget.uid)),
+                            child: Text(
+                              'Edit Profile',
+                              style: GoogleFonts.roboto(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        
+                      ],
                     ),
                     SizedBox(height: 5),
                     Text(
-                      '@${user!.userName}',
+                      '@${user.userName}',
                       style: GoogleFonts.roboto(
                         fontSize: 18,
                         fontWeight: FontWeight.normal,
@@ -98,7 +152,7 @@ class _ProfileScareenState extends State<ProfileScareen> {
                     ),
                     SizedBox(height: 10),
                     Text(
-                      user!.bio,
+                      user.bio,
                       style: GoogleFonts.roboto(
                         fontSize: 17,
                         color: Colors.grey.shade900,
@@ -111,46 +165,44 @@ class _ProfileScareenState extends State<ProfileScareen> {
                         Icon(Icons.calendar_today_outlined, size: 16),
                         SizedBox(width: 5),
                         Text(
-                          'Joined : ${DateFormat('MMMM d,y').format(user!.date)}',
+                          'Joined : ${DateFormat('MMMM d,y').format(user.date)}',
                         ),
                       ],
                     ),
                     SizedBox(height: 15),
-                    Row(
-                      children: [
-                        Text(
-                          '1k',
-                          style: GoogleFonts.roboto(
-                            fontSize: 18,
-                            color: Colors.black,
-                          ),
-                        ),
-                        SizedBox(width: 5),
-                        Text(
-                          'Following',
-                          style: GoogleFonts.roboto(
-                            fontSize: 18,
-                            color: Colors.grey.shade700,
-                          ),
-                        ),
-                        SizedBox(width: 10),
-                        Text(
-                          '1k',
-                          style: GoogleFonts.roboto(
-                            fontSize: 18,
-                            color: Colors.black,
-                          ),
-                        ),
-                        SizedBox(width: 5),
-                        Text(
-                          'Followers',
-                          style: GoogleFonts.roboto(
-                            fontSize: 18,
-                            color: Colors.grey.shade700,
-                          ),
-                        ),
-                      ],
+                    followersRow(
+                      postCount: allUserPost.length,
+                      followerCount: followerCount,
+                      followingCount: followingCount,
+                      onTap:()=>Get.to(()=>Followerslist(uid: widget.uid,))
                     ),
+                    SizedBox(height: 20),
+                    if (user != null && user.uid != currentID)
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _isFollowing
+                                  ? Colors.blue
+                                  : Colors.black,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                             
+                              fixedSize: Size(
+                                MediaQuery.of(context).size.width,  
+                                70,
+                              ),
+                            ),
+                            onPressed: toggleFollow,
+                            child: Text(
+                              _isFollowing ? 'Unfollow' : 'Follow',
+                              style: GoogleFonts.roboto(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                
                     SizedBox(height: 20),
                     TabBar(
                       tabs: [
@@ -218,12 +270,10 @@ class _ProfileScareenState extends State<ProfileScareen> {
                                             radius: 20,
                                             backgroundColor:
                                                 Colors.grey.shade400,
-                                            child: Center(
-                                              child: Icon(
-                                                Iconsax.profile_add,
-                                                color: Colors.black,
-                                              ),
-                                            ),
+                                             backgroundImage: user?.image != null
+                          ? NetworkImage(user!.image)
+                          : const AssetImage('assets/images/user.png')
+                              as ImageProvider,
                                           ),
                                           SizedBox(width: 10),
                                           Text(
@@ -311,7 +361,8 @@ class _ProfileScareenState extends State<ProfileScareen> {
                                           children: [
                                             actionRow(
                                               icon: 'assets/chat.png',
-                                              count: provider.getComments(post.id)
+                                              count: provider
+                                                  .getComments(post.id)
                                                   .length
                                                   .toString(),
                                             ),
@@ -322,16 +373,22 @@ class _ProfileScareenState extends State<ProfileScareen> {
                                             Row(
                                               children: [
                                                 IconButton(
-                                                  onPressed: () {
-                                                  
-                                                  },
-                                                  icon:provider.getLikeCount(post.id)==0 ? Icon(
-                                                    Icons.favorite_border,
-                                                    color: Colors.grey.shade800,
-                                                  ) : Icon(
-                                                    Icons.favorite,
-                                                    color: Colors.red,
-                                                  ),
+                                                  onPressed: () {},
+                                                  icon:
+                                                      provider.getLikeCount(
+                                                            post.id,
+                                                          ) ==
+                                                          0
+                                                      ? Icon(
+                                                          Icons.favorite_border,
+                                                          color: Colors
+                                                              .grey
+                                                              .shade800,
+                                                        )
+                                                      : Icon(
+                                                          Icons.favorite,
+                                                          color: Colors.red,
+                                                        ),
                                                 ),
                                                 Consumer<Userprovider>(
                                                   builder: (context, value, _) {
@@ -388,3 +445,4 @@ class _ProfileScareenState extends State<ProfileScareen> {
     );
   }
 }
+

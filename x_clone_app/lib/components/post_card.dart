@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:x_clone_app/Auth/repository/authentication_repository.dart';
 import 'package:x_clone_app/components/bottommodelsheed.dart';
 import 'package:x_clone_app/model/postModel.dart';
+import 'package:x_clone_app/model/user_model.dart';
 import 'package:x_clone_app/provider/user_provider.dart';
 import 'package:x_clone_app/utils/Snackbar/snackbar.dart';
 import 'package:x_clone_app/utils/dialoag/confirmation_dialog.dart';
@@ -28,18 +29,29 @@ class _postCardState extends State<postCard> {
     context,
     listen: false,
   );
+  UserModel? user;
+
   @override
   initState() {
     super.initState();
     _loadcomments();
+    loadUserdata();
+    
   }
 
   Future<void> _loadcomments() async {
     await databaseProvider.loadcomments(widget.post.id);
+   user= await databaseProvider.loadUSerData(widget.post.uid);
   }
+  Future<void> loadUserdata() async {
+    
+   user= await databaseProvider.loadUSerData(widget.post.uid);
+  }
+
 
   @override
   Widget build(BuildContext context) {
+    
     void _showOptions() {
       final String uid = widget.post.uid;
       final String currentUserId = AuthenticationRepository().getCurrentUid();
@@ -75,6 +87,7 @@ class _postCardState extends State<postCard> {
                       'cancel',
                       context,
                       () async {
+                         Navigator.pop(context); 
                         await databaseProvider.reportUser(
                           widget.post.uid,
                           widget.post.id,
@@ -97,16 +110,19 @@ class _postCardState extends State<postCard> {
                       'Block User',
                       'Are you sure to Block the Uaer',
 
-                      'Unblock ',
+                      'Block ',
                       'cancel',
                       context,
                       () async {
+                         Navigator.pop(context); 
                         await databaseProvider.blockUserinFirebase(widget.post.uid);
+                         // ignore: use_build_context_synchronously
+                         Navigator.pop(context);
                         SnackbarUtil.successSnackBar(
                           title: 'Success',
                           message: 'User Block successfully',
                         );
-                        Navigator.pop(context);
+                       
                       },
                       () => Navigator.pop(context),
                     ),
@@ -155,7 +171,7 @@ class _postCardState extends State<postCard> {
                     onTap: () {
                       Get.to(
                         () => ProfileScareen(
-                          post: widget.post,
+                          
                           uid: widget.post.uid,
                         ),
                       );
@@ -163,16 +179,18 @@ class _postCardState extends State<postCard> {
                     child: CircleAvatar(
                       radius: 20,
                       backgroundColor: Colors.grey.shade400,
-                      child: Center(
-                        child: Icon(Iconsax.profile_add, color: Colors.black),
-                      ),
+                      backgroundImage: user?.image != null
+                          ? NetworkImage(user!.image)
+                          : const AssetImage('assets/person.png')
+                              as ImageProvider,
+                      
                     ),
                   ),
                   SizedBox(width: 10),
                   GestureDetector(
                     onTap: () => Get.to(
                       () => ProfileScareen(
-                        post: widget.post,
+                       
                         uid: widget.post.uid,
                       ),
                     ),
@@ -253,7 +271,7 @@ class _postCardState extends State<postCard> {
                         count: comments != 0 ? comments.toString() : "",
                       ),
                     ),
-                    actionRow(icon: 'assets/tweet.png', count: '32'),
+                    actionRow(icon: 'assets/tweet.png', count: ''),
                     Row(
                       children: [
                         IconButton(

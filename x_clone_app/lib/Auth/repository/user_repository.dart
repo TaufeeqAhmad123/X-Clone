@@ -21,9 +21,9 @@ class UserRepository {
   final String collectionName = 'user';
   late String uid = _auth.currentUser!.uid;
   String imageurl =
-      'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=400';
+      '';
   //store data into firebase
-  Future<void> addUser(String name, String lastName, String email) async {
+  Future<void> addUser(String name, String lastName, String email,String uid) async {
     final String username = email.split('@')[0];
     final String fullName = "$name $lastName";
     final DateTime today = DateTime.now();
@@ -56,6 +56,7 @@ class UserRepository {
 
   //Get user details from Firestore
   Future<UserModel?> getUserDetails(String uid) async {
+    
     try {
       DocumentSnapshot snapshot = await _db
           .collection(collectionName)
@@ -75,23 +76,92 @@ class UserRepository {
       return null;
     }
   }
+  Future<List<UserModel>> searchuserInFirebase(String searchitem) async {
+    
+    try {
+      QuerySnapshot snapshot = await _db
+          .collection('user')
+          .where('userName', isGreaterThanOrEqualTo: searchitem)
+          .where('userName', isLessThanOrEqualTo: '$searchitem\uf8ff')
+          .get();
+      return snapshot.docs.map((doc)=> UserModel.fromDocument(doc)).toList();
+    } on FirebaseAuthException catch (e) {
+      throw TFirebaseAuthException(e.code).message;
+    } on FirebaseException catch (e) {
+      throw TFirebaseException(e.code).message;
+    } on FormatException catch (_) {
+      throw const TFormatException();
+    } on PlatformException catch (e) {
+      throw TPlatformException(e.code).message;
+    } catch (e) {
+      print('Error getting user details: $e');
+      return [];
+    }
+  }
+  Future<UserModel?> updateUserProfile(String currentUserId,String name,image,bio) async {
+    try {
+      UserModel? user = await getUserDetails(currentUserId);
+      
+      await _db.collection('user').doc(uid).update({
+        'image': image ?? user!.image,
+        'name' : name ?? user!.name,
+        'bio' : bio ?? user!.bio,
+      });
+    } on FirebaseAuthException catch (e) {
+      throw TFirebaseAuthException(e.code).message;
+    } on FirebaseException catch (e) {
+      throw TFirebaseException(e.code).message;
+    } on FormatException catch (_) {
+      throw const TFormatException();
+    } on PlatformException catch (e) {
+      throw TPlatformException(e.code).message;
+    } catch (e) {
+      print('Error getting user details: $e');
+     
+    }
+  }
+
   Future<void> deleteuserDetail(String uid) async {
     try {
-      WriteBatch batch=_db.batch();
-      DocumentReference userDoc=_db.collection('user').doc(uid);
+      WriteBatch batch = _db.batch();
+      //delte user details
+      DocumentReference userDoc = _db.collection('user').doc(uid);
       batch.delete(userDoc);
-      QuerySnapshot postDoc= await  _db.collection('post').where('uid', isEqualTo:uid ).get();
-      for(var post in postDoc.docs){
-          batch.delete(post.reference);
+      //delete user post 
+      QuerySnapshot postDoc = await _db
+          .collection('post')
+          .where('uid', isEqualTo: uid)
+          .get();
+      for (var post in postDoc.docs) {
+        batch.delete(post.reference);
       }
-      QuerySnapshot commentDoc= await  _db.collection('comments').where('uid', isEqualTo:uid ).get();
-      for(var post in commentDoc.docs){
-          batch.delete(post.reference);
+      //delete user comment
+      QuerySnapshot commentDoc = await _db
+          .collection('comments')
+          .where('uid', isEqualTo: uid)
+          .get();
+      for (var post in commentDoc.docs) {
+        batch.delete(post.reference);
       }
-   
-  await batch.commit();
-     
+      //delete user likes
+      QuerySnapshot likeDoc = await _db
+          .collection('post')
+          .where('likeBY', arrayContains: uid)
+          .get();
+      for (var post in likeDoc.docs) {
+        List<String> likeBY = List<String>.from(post['likeBY'] ?? []);
+        int currentLikeCount = post['likecounts'] ?? 0;
+        if (likeBY.contains(uid)) {
+          likeBY.remove(uid);
+          currentLikeCount--;
+        }
+        batch.update(post.reference, {
+          'likeBY': likeBY,
+          'likecounts': currentLikeCount,
+        });
+      }
 
+      await batch.commit();
     } on FirebaseAuthException catch (e) {
       throw TFirebaseAuthException(e.code).message;
     } on FirebaseException catch (e) {
@@ -280,17 +350,18 @@ class UserRepository {
     }
     return [];
   }
-  Future<void> repostUser(String postid,userId) async {
-    try {
-     final currentuserId=_auth.currentUser!.uid;
 
-     final report={
+  Future<void> repostUser(String postid, userId) async {
+    try {
+      final currentuserId = _auth.currentUser!.uid;
+
+      final report = {
         'postID': postid,
         'postOwnerID': userId,
-        'reportedBy':currentuserId,
-        'timestamp':DateTime.now().toString(),
-     };
-         await _db.collection('report').add(report);
+        'reportedBy': currentuserId,
+        'timestamp': DateTime.now().toString(),
+      };
+      await _db.collection('report').add(report);
     } on FirebaseAuthException catch (e) {
       throw TFirebaseAuthException(e.code).message;
     } on FirebaseException catch (e) {
@@ -302,13 +373,18 @@ class UserRepository {
     } catch (e) {
       print('Error getting posts: $e');
     }
-    
   }
+
   Future<void> blockuser(String userId) async {
     try {
-     final currentuserId=_auth.currentUser!.uid;
+      final currentuserId = _auth.currentUser!.uid;
 
-         await _db.collection('user').doc(currentuserId).collection('BlockUser').doc(userId).set({});
+      await _db
+          .collection('user')
+          .doc(currentuserId)
+          .collection('BlockUser')
+          .doc(userId)
+          .set({});
     } on FirebaseAuthException catch (e) {
       throw TFirebaseAuthException(e.code).message;
     } on FirebaseException catch (e) {
@@ -320,13 +396,18 @@ class UserRepository {
     } catch (e) {
       print('Error getting posts: $e');
     }
-    
   }
+
   Future<void> Unblockuser(String blockuserId) async {
     try {
-     final currentuserId=_auth.currentUser!.uid;
+      final currentuserId = _auth.currentUser!.uid;
 
-         await _db.collection('user').doc(currentuserId).collection('BlockUser').doc(blockuserId).delete();
+      await _db
+          .collection('user')
+          .doc(currentuserId)
+          .collection('BlockUser')
+          .doc(blockuserId)
+          .delete();
     } on FirebaseAuthException catch (e) {
       throw TFirebaseAuthException(e.code).message;
     } on FirebaseException catch (e) {
@@ -338,14 +419,18 @@ class UserRepository {
     } catch (e) {
       print('Error getting posts: $e');
     }
-    
   }
+
   Future<List<String>> getblockUserFromFirebase() async {
     try {
-     final currentuserId=_auth.currentUser!.uid;
+      final currentuserId = _auth.currentUser!.uid;
 
-      final snapshot=   await _db.collection('user').doc(currentuserId).collection('BlockUser').get();
-      return snapshot.docs.map((doc)=>doc.id).toList();
+      final snapshot = await _db
+          .collection('user')
+          .doc(currentuserId)
+          .collection('BlockUser')
+          .get();
+      return snapshot.docs.map((doc) => doc.id).toList();
     } on FirebaseAuthException catch (e) {
       throw TFirebaseAuthException(e.code).message;
     } on FirebaseException catch (e) {
@@ -358,32 +443,136 @@ class UserRepository {
       print('Error getting posts: $e');
     }
     return [];
-    
   }
+  //Folow user
+  Future<void> followuserInFirebase(String UID) async {
+    try {
+      final currentuserId = _auth.currentUser!.uid;
+
+    await _db.collection('user').doc(currentuserId).collection('Following').doc(UID).set({});
+    await _db.collection('user').doc(UID).collection('Follower').doc(currentuserId).set({});
+     
+    } on FirebaseAuthException catch (e) {
+      throw TFirebaseAuthException(e.code).message;
+    } on FirebaseException catch (e) {
+      throw TFirebaseException(e.code).message;
+    } on FormatException catch (_) {
+      throw const TFormatException();
+    } on PlatformException catch (e) {
+      throw TPlatformException(e.code).message;
+    } catch (e) {
+      print('Error getting posts: $e');
+    }
+   
+  }
+  Future<void> unfollowuserInFirebase(String UID) async {
+    try {
+      final currentuserId = _auth.currentUser!.uid;
+
+    await _db.collection('user').doc(currentuserId).collection('Following').doc(UID).delete();
+    await _db.collection('user').doc(UID).collection('Follower').doc(currentuserId).delete();
+     
+    } on FirebaseAuthException catch (e) {
+      throw TFirebaseAuthException(e.code).message;
+    } on FirebaseException catch (e) {
+      throw TFirebaseException(e.code).message;
+    } on FormatException catch (_) {
+      throw const TFormatException();
+    } on PlatformException catch (e) {
+      throw TPlatformException(e.code).message;
+    } catch (e) {
+      print('Error getting posts: $e');
+    }
+   
+  }
+  Future<List<String>> getFollowersfromFirebase(String UID) async {
+    try {
+      final currentuserId = _auth.currentUser!.uid;
+
+  final snapshot=  await _db.collection('user').doc(UID).collection('Follower').get();
+  return snapshot.docs.map((doc)=>doc.id).toList();
+    
+   
+    } on FirebaseAuthException catch (e) {
+      throw TFirebaseAuthException(e.code).message;
+    } on FirebaseException catch (e) {
+      throw TFirebaseException(e.code).message;
+    } on FormatException catch (_) {
+      throw const TFormatException();
+    } on PlatformException catch (e) {
+      throw TPlatformException(e.code).message;
+    } catch (e) {
+      print('Error getting posts: $e');
+    }
+    return [];
+   
+  }
+  
+  Future<List<String>> getFollowinguserfromFirebase(String UID) async {
+    try {
+      final currentuserId = _auth.currentUser!.uid;
+
+  final snapshot=  await _db.collection('user').doc(UID).collection('Following').get();
+  return snapshot.docs.map((doc)=>doc.id).toList();
+    
+   
+    } on FirebaseAuthException catch (e) {
+      throw TFirebaseAuthException(e.code).message;
+    } on FirebaseException catch (e) {
+      throw TFirebaseException(e.code).message;
+    } on FormatException catch (_) {
+      throw const TFormatException();
+    } on PlatformException catch (e) {
+      throw TPlatformException(e.code).message;
+    } catch (e) {
+      print('Error getting posts: $e');
+    }
+    return [];
+   
+  }
+  
+
 
   Future<String> uploadImageToSupabase(File image) async {
-  final fieldName = DateTime.now().microsecondsSinceEpoch.toString();
-  final path = 'post/$fieldName.jpg';
+    final fieldName = DateTime.now().microsecondsSinceEpoch.toString();
+    final path = 'post/$fieldName.jpg';
 
-  try {
-    final storage = Supabase.instance.client.storage;
-    
-    await storage.from('images').upload(path, image);
-    
-    SnackbarUtil.successSnackBar(
-      title: 'Image uploaded',
-      message: 'Image uploaded successfully',
-    );
+    try {
+      final storage = Supabase.instance.client.storage;
 
-    final imageUrl = storage.from('images').getPublicUrl(path);
-    return imageUrl;
+      await storage.from('images').upload(path, image);
 
-  } catch (e) {
-    print('Upload Error: $e');
-    rethrow; // Or show error Snackbar
+      SnackbarUtil.successSnackBar(
+        title: 'Image uploaded',
+        message: 'Image uploaded successfully',
+      );
+
+      final imageUrl = storage.from('images').getPublicUrl(path);
+      return imageUrl;
+    } catch (e) {
+      print('Upload Error: $e');
+      rethrow; // Or show error Snackbar
+    }
   }
-}
+  Future<String> uploadprofileImageToSupabase(File image) async {
+    final fieldName = DateTime.now().microsecondsSinceEpoch.toString();
+    final path = 'User Profile/$fieldName';
 
+    try {
+      final storage = Supabase.instance.client.storage;
 
- 
+      await storage.from('images').upload(path, image);
+
+      SnackbarUtil.successSnackBar(
+        title: 'Image uploaded',
+        message: 'Image uploaded successfully',
+      );
+
+      final imageUrl = storage.from('images').getPublicUrl(path);
+      return imageUrl;
+    } catch (e) {
+      print('Upload Error: $e');
+      rethrow; // Or show error Snackbar
+    }
+  }
 }

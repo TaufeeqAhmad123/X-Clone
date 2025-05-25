@@ -70,6 +70,7 @@ class AuthenticationRepository {
   Future<void> Logout() async {
     try{
       await  _auth.signOut();
+      _auth.currentUser!.reload();
     }on FirebaseAuthException catch (e) {
       throw TFirebaseAuthException(e.code).message;
     } on FirebaseException catch (e) {

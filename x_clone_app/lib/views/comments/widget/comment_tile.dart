@@ -85,7 +85,7 @@ class CommentTile extends StatelessWidget {
               children: [
                 GestureDetector(
                   onTap: () {
-                    Get.to(() => ProfileScareen(post: post,uid: post.uid,));
+                    Get.to(() => ProfileScareen(uid: post.uid,));
                   },
                   child: CircleAvatar(
                     radius: 20,
@@ -101,7 +101,7 @@ class CommentTile extends StatelessWidget {
                 SizedBox(width: 10),
                 GestureDetector(
                   onTap: () {
-                    Get.to(() => ProfileScareen(post: post,uid: comment.uid,));
+                    Get.to(() => ProfileScareen(uid: comment.uid,));
                   },
                   child: Text(
                     comment.name,

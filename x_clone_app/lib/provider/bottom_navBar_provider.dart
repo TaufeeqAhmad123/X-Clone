@@ -1,23 +1,31 @@
 import 'package:flutter/material.dart';
-import 'package:x_clone_app/model/user_model.dart';
+import 'package:x_clone_app/Auth/repository/authentication_repository.dart';
 import 'package:x_clone_app/views/home/home.dart';
 import 'package:x_clone_app/views/profile/profile_scareen.dart';
+import 'package:x_clone_app/views/search/search.dart';
 
 class BottomNavbarProvider with ChangeNotifier {
   int _currentIndex = 0;
-
+ String get currentUserId => AuthenticationRepository().getCurrentUid();
   int get currentIndex => _currentIndex;
+  
 
   void setCurrentIndex(int index) {
     _currentIndex = index;
     notifyListeners();
   }
 
-  final List<Widget> _screens = [
-    HomeScreen(),
-    const Center(child: Text("Search")),
-    const Center(child: Text("Notifications")),
-    ProfileScareen(post: null, uid: '',),
-  ];
+  late final List<Widget> _screens;
+
   List<Widget> get screens => _screens;
+
+ BottomNavbarProvider() {
+
+  _screens = [
+    HomeScreen(),
+    SearchScreen(uid: currentUserId,),
+    const Center(child: Text("Notifications")),
+    ProfileScareen( uid: currentUserId,),
+  ];
+}
 }

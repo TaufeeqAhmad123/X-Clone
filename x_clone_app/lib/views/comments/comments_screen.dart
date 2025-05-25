@@ -105,7 +105,7 @@ class PostTile extends StatelessWidget {
             children: [
               GestureDetector(
                 onTap: () {
-                  Get.to(() => ProfileScareen(post: post,uid: post.uid,));
+                  Get.to(() => ProfileScareen(uid: post.uid,));
                 },
                 child: CircleAvatar(
                   radius: 20,

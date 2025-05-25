@@ -44,15 +44,16 @@ class SignupProvider with ChangeNotifier {
         _isLoading = false;
         return;
       }
-      final user = await _authenticationRepository.Signup(
+      final userCredential = await _authenticationRepository.Signup(
         emailController.text.trim(),
         passwordController.text.trim(),
       );
-    
+    final uid=userCredential.user!.uid;
        _userRepository.addUser(
         nameController.text.trim(),
         seconNameController.text.trim(),
         emailController.text.trim(),
+       uid,
         );
       notifyListeners();
 
