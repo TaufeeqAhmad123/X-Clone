@@ -40,6 +40,19 @@ class Postmodel {
 
     };
   }
+  factory Postmodel.empty() {
+    return Postmodel(
+      id: '',
+      uid: '',
+      name: '',
+      userName: '',
+      message: '',
+      image: '',
+      timestamp: '',
+      likecounts: 0,
+      likeBY: [],
+    );
+  }
   factory Postmodel.fromDocument(DocumentSnapshot doc) {
     return Postmodel(
       id: doc.id,

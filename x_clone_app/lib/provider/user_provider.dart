@@ -1,12 +1,15 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:x_clone_app/Auth/repository/authentication_repository.dart';
 import 'package:x_clone_app/Auth/repository/user_repository.dart';
 import 'package:x_clone_app/model/commentModel.dart';
 import 'package:x_clone_app/model/postModel.dart';
 import 'package:x_clone_app/model/user_model.dart';
+import 'package:x_clone_app/service/cloude_messaging_service.dart';
 import 'package:x_clone_app/utils/Snackbar/snackbar.dart';
 
 class Userprovider with ChangeNotifier {
@@ -156,6 +159,51 @@ class Userprovider with ChangeNotifier {
   //store comments in the post
   Future<void> storeCommentInFirebase(String postID, String comment) async {
     await _db.commentOnPost(postID, comment);
+    //get post id 
+    Postmodel? post = _postsList.firstWhere(
+      (post) => post.id == postID,
+      orElse: () => Postmodel.empty(),
+    );
+    //curent user id
+    var currentUserId = AuthenticationRepository().getCurrentUid();
+    //get current user detail
+    var commenter = await _db.getUserDetails(currentUserId);
+    //get current use deatil which will show on notification 
+    String commenterName = commenter?.name ?? "Someone";
+    //get the post owner detail
+    var postowner = await _db.getUserDetails(post.uid);
+    //get the FCM token of the post owner
+    var FCMToken = postowner?.FCMToken;
+    if (FCMToken == null || FCMToken!.isEmpty) {
+      print('FCM Token is null or empty');
+    }
+    final get = getCloudeMessagingService();
+    String token = await get.serverToken();
+    await http.post(
+      Uri.parse(
+        'https://fcm.googleapis.com/v1/projects/xclone-af992/messages:send',
+      ),
+      headers: <String, String>{
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(<String, dynamic>{
+        "message": {
+          "token": FCMToken, // Use the FCM token of the post owner
+          "notification": {
+            "title": "New Comment from $commenterName",
+            "body": comment,
+          },
+          "data": {
+            "type": "comment",
+            "postID": postID,
+            "commenterID": currentUserId,
+            "comment": comment,
+          },
+        },
+      }),
+    );
+
     await loadcomments(postID);
   }
 
@@ -399,6 +447,4 @@ class Userprovider with ChangeNotifier {
       // print('image url is $url');
     }
   }
-  
-
 }

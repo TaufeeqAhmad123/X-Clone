@@ -44,38 +44,10 @@ class SearchScreen extends StatelessWidget {
       ),
       body: provider.searchUserList.isEmpty
           ? Center(
-              child: ElevatedButton(
-                onPressed: () async {
-                  final get = getCloudeMessagingService();
-                  String token = await get.serverToken();
-                  await http.post(
-                    Uri.parse(
-                        'https://fcm.googleapis.com/v1/projects/xclone-af992/messages:send'),
-                    headers: <String, String>{
-                      'Content-Type': 'application/json',
-                      'Authorization': 'Bearer $token',
-                    },
-                    body: jsonEncode(<String, dynamic>{
-                      "message": {
-                        "token":
-                            'dY8-xIdDRSeFzjBEJLkns4:APA91bGWxieRsLWtWlKBycj9LIMpvjPD3yDJjHrtHhMShDy_wlmV8Q_kMaWQJ75Vg63y8tknETF16iON4DH625NXPD0a_Bp1ceVWnGZMDpwPRvzP2WpQ3MY',
-                        "notification": {
-                          "body": 'This is the push notification',
-                          "title": 'Push Notification',
-                        },
-                        "data": {"type": "msg", "id": "12345"},
-                      }
-                    }),
-                  );
-                  print('toen');
-                },
-                child: Text('Send Request'),
+              child: Text(
+                'No users found${uid}',
+                style: TextStyle(fontSize: 18, color: Colors.black54),
               ),
-              //
-              // Text(
-              //   'No users found${uid}',
-              //   style: TextStyle(fontSize: 18, color: Colors.black54),
-              // ),
             )
           : Expanded(
               child: ListView.builder(

@@ -30,7 +30,8 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
-        
+        <!-- The following meta-data tag is used by the Firebase Messaging plugin to
+             set the default notification channel for incoming messages. -->
         <meta-data
            android:name="com.google.firebase.messaging.default_notification_channel_id"
            android:value="high_importance_channel" />

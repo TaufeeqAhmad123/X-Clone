@@ -11,26 +11,26 @@ import 'package:x_clone_app/provider/bottom_navBar_provider.dart';
 import 'package:x_clone_app/provider/login_provider.dart';
 import 'package:x_clone_app/provider/signup_provider.dart';
 import 'package:x_clone_app/provider/user_provider.dart';
+import 'package:x_clone_app/service/Messaging.dart';
 import 'package:x_clone_app/views/authGate.dart';
+
 //
 @pragma('vm:entry-point')
 // Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message)async {
 //   await Firebase.initializeApp();
 // }
-
-void main( ) async {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
- 
 
   await Supabase.initialize(
     url: 'https://nuaeiuvcwtqpeueszeps.supabase.co',
     anonKey:
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im51YWVpdXZjd3RxcGV1ZXN6ZXBzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc4NDc2NzAsImV4cCI6MjA2MzQyMzY3MH0.PWh2vie2Fqz32q0lQncmmkC7FClMPzduZhz8EgfhDiE',
   );
-MessageApi().requrstNotificationPermision();
-MessageApi().isTokenRefresh();
-FirebaseMessaging.onBackgroundMessage(firebasemessagingBackgroundHandler);
+  MessageApi().requrstNotificationPermision();
+  MessageApi().isTokenRefresh();
+  FirebaseMessaging.onBackgroundMessage(firebasemessagingBackgroundHandler);
 
   runApp(
     MultiProvider(
@@ -44,6 +44,7 @@ FirebaseMessaging.onBackgroundMessage(firebasemessagingBackgroundHandler);
     ),
   );
 }
+
 @pragma('vm:entry-point')
 Future<void> firebasemessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
@@ -63,7 +64,7 @@ class MyApp extends StatelessWidget {
         return GetMaterialApp(
           debugShowCheckedModeBanner: false,
           title: 'X Clone',
-         
+
           home: const Authgate(),
         );
       },

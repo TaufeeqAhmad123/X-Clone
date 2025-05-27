@@ -18,6 +18,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        //add this for the firebasemessaging dependency
         isCoreLibraryDesugaringEnabled = true
     }
 
@@ -56,6 +57,7 @@ dependencies {
   // TODO: Add the dependencies for Firebase products you want to use
   // When using the BoM, don't specify versions in Firebase dependencies
   implementation("com.google.firebase:firebase-analytics")
+  // For Firebase Cloud Messaging, add the following dependency
   coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 
 
