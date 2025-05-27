@@ -10,6 +10,7 @@ class UserModel {
  
   final String image;
   final DateTime date;
+  final String? FCMToken;
 
   UserModel(
     {
@@ -19,7 +20,8 @@ class UserModel {
    required  this.userName,
   required  this.bio,
   required  this.image,
-  required this.date
+  required this.date,
+  required this.FCMToken
   });
 
   Map<String, dynamic> toMap() {
@@ -31,6 +33,7 @@ class UserModel {
       'bio': bio,
       'image': image,
       'date': date,
+      'FCMToken': FCMToken,
     };
   }
 factory UserModel.fromDocument(DocumentSnapshot doc){
@@ -42,6 +45,7 @@ factory UserModel.fromDocument(DocumentSnapshot doc){
     bio: doc['bio'] ?? '',
     image: doc['image'] ?? '',
     date: (doc['date'] as Timestamp).toDate(),
+    FCMToken: doc['FCMToken'] ?? '',
   );
 }
 }

@@ -9,11 +9,13 @@ import 'package:iconsax/iconsax.dart';
 import 'package:provider/provider.dart';
 import 'package:x_clone_app/Auth/Login/login.dart';
 import 'package:x_clone_app/Auth/repository/authentication_repository.dart';
+import 'package:x_clone_app/Auth/repository/user_repository.dart';
 
 import 'package:x_clone_app/components/my_drawer.dart';
 import 'package:x_clone_app/components/post_card.dart';
 import 'package:x_clone_app/model/postModel.dart';
 import 'package:x_clone_app/provider/user_provider.dart';
+import 'package:x_clone_app/service/cloude_messaging_service.dart';
 
 class HomeScreen extends StatefulWidget {
   HomeScreen({super.key});
@@ -34,7 +36,15 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    MessageApi().firebaseInit(context);
+   // MessageApi().setupInterectMessage(context);
     loadAllPost();
+    final token=getCloudeMessagingService().serverToken();
+    token.then((value) {
+      print('Server Token: $value');
+    }).catchError((error) {
+      print('Error getting server token: $error');
+    });
   }
 
   Future<void> loadAllPost() async {

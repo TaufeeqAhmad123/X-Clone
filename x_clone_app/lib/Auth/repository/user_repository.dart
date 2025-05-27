@@ -1,9 +1,16 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:x_clone_app/model/commentModel.dart';
@@ -14,20 +21,27 @@ import 'package:x_clone_app/utils/Exception/firebase_exception.dart';
 import 'package:x_clone_app/utils/Exception/formate_exception.dart';
 import 'package:x_clone_app/utils/Exception/platfrom_exception.dart';
 import 'package:x_clone_app/utils/Snackbar/snackbar.dart';
+import 'package:x_clone_app/views/search/search.dart';
 
 class UserRepository {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final _auth = FirebaseAuth.instance;
   final String collectionName = 'user';
   late String uid = _auth.currentUser!.uid;
-  String imageurl =
-      '';
+  String imageurl = '';
   //store data into firebase
-  Future<void> addUser(String name, String lastName, String email,String uid) async {
+
+  Future<void> addUser(
+    String name,
+    String lastName,
+    String email,
+    String uid,
+  ) async {
     final String username = email.split('@')[0];
     final String fullName = "$name $lastName";
     final DateTime today = DateTime.now();
     final DateTime onlyDate = DateTime(today.year, today.month, today.day);
+     final String token = await MessageApi().getDeviceToken(); // FIXED ✅
 
     final user = UserModel(
       name: fullName,
@@ -37,6 +51,7 @@ class UserRepository {
       bio: 'This is my bio',
       image: imageurl,
       date: onlyDate,
+      FCMToken: token,
     ).toMap();
 
     try {
@@ -56,7 +71,6 @@ class UserRepository {
 
   //Get user details from Firestore
   Future<UserModel?> getUserDetails(String uid) async {
-    
     try {
       DocumentSnapshot snapshot = await _db
           .collection(collectionName)
@@ -76,15 +90,15 @@ class UserRepository {
       return null;
     }
   }
+
   Future<List<UserModel>> searchuserInFirebase(String searchitem) async {
-    
     try {
       QuerySnapshot snapshot = await _db
           .collection('user')
           .where('userName', isGreaterThanOrEqualTo: searchitem)
           .where('userName', isLessThanOrEqualTo: '$searchitem\uf8ff')
           .get();
-      return snapshot.docs.map((doc)=> UserModel.fromDocument(doc)).toList();
+      return snapshot.docs.map((doc) => UserModel.fromDocument(doc)).toList();
     } on FirebaseAuthException catch (e) {
       throw TFirebaseAuthException(e.code).message;
     } on FirebaseException catch (e) {
@@ -98,14 +112,20 @@ class UserRepository {
       return [];
     }
   }
-  Future<UserModel?> updateUserProfile(String currentUserId,String name,image,bio) async {
+
+  Future<UserModel?> updateUserProfile(
+    String currentUserId,
+    String name,
+    image,
+    bio,
+  ) async {
     try {
       UserModel? user = await getUserDetails(currentUserId);
-      
+
       await _db.collection('user').doc(uid).update({
         'image': image ?? user!.image,
-        'name' : name ?? user!.name,
-        'bio' : bio ?? user!.bio,
+        'name': name ?? user!.name,
+        'bio': bio ?? user!.bio,
       });
     } on FirebaseAuthException catch (e) {
       throw TFirebaseAuthException(e.code).message;
@@ -117,7 +137,6 @@ class UserRepository {
       throw TPlatformException(e.code).message;
     } catch (e) {
       print('Error getting user details: $e');
-     
     }
   }
 
@@ -127,7 +146,7 @@ class UserRepository {
       //delte user details
       DocumentReference userDoc = _db.collection('user').doc(uid);
       batch.delete(userDoc);
-      //delete user post 
+      //delete user post
       QuerySnapshot postDoc = await _db
           .collection('post')
           .where('uid', isEqualTo: uid)
@@ -444,14 +463,24 @@ class UserRepository {
     }
     return [];
   }
+
   //Folow user
   Future<void> followuserInFirebase(String UID) async {
     try {
       final currentuserId = _auth.currentUser!.uid;
 
-    await _db.collection('user').doc(currentuserId).collection('Following').doc(UID).set({});
-    await _db.collection('user').doc(UID).collection('Follower').doc(currentuserId).set({});
-     
+      await _db
+          .collection('user')
+          .doc(currentuserId)
+          .collection('Following')
+          .doc(UID)
+          .set({});
+      await _db
+          .collection('user')
+          .doc(UID)
+          .collection('Follower')
+          .doc(currentuserId)
+          .set({});
     } on FirebaseAuthException catch (e) {
       throw TFirebaseAuthException(e.code).message;
     } on FirebaseException catch (e) {
@@ -463,15 +492,24 @@ class UserRepository {
     } catch (e) {
       print('Error getting posts: $e');
     }
-   
   }
+
   Future<void> unfollowuserInFirebase(String UID) async {
     try {
       final currentuserId = _auth.currentUser!.uid;
 
-    await _db.collection('user').doc(currentuserId).collection('Following').doc(UID).delete();
-    await _db.collection('user').doc(UID).collection('Follower').doc(currentuserId).delete();
-     
+      await _db
+          .collection('user')
+          .doc(currentuserId)
+          .collection('Following')
+          .doc(UID)
+          .delete();
+      await _db
+          .collection('user')
+          .doc(UID)
+          .collection('Follower')
+          .doc(currentuserId)
+          .delete();
     } on FirebaseAuthException catch (e) {
       throw TFirebaseAuthException(e.code).message;
     } on FirebaseException catch (e) {
@@ -483,16 +521,18 @@ class UserRepository {
     } catch (e) {
       print('Error getting posts: $e');
     }
-   
   }
+
   Future<List<String>> getFollowersfromFirebase(String UID) async {
     try {
       final currentuserId = _auth.currentUser!.uid;
 
-  final snapshot=  await _db.collection('user').doc(UID).collection('Follower').get();
-  return snapshot.docs.map((doc)=>doc.id).toList();
-    
-   
+      final snapshot = await _db
+          .collection('user')
+          .doc(UID)
+          .collection('Follower')
+          .get();
+      return snapshot.docs.map((doc) => doc.id).toList();
     } on FirebaseAuthException catch (e) {
       throw TFirebaseAuthException(e.code).message;
     } on FirebaseException catch (e) {
@@ -505,17 +545,18 @@ class UserRepository {
       print('Error getting posts: $e');
     }
     return [];
-   
   }
-  
+
   Future<List<String>> getFollowinguserfromFirebase(String UID) async {
     try {
       final currentuserId = _auth.currentUser!.uid;
 
-  final snapshot=  await _db.collection('user').doc(UID).collection('Following').get();
-  return snapshot.docs.map((doc)=>doc.id).toList();
-    
-   
+      final snapshot = await _db
+          .collection('user')
+          .doc(UID)
+          .collection('Following')
+          .get();
+      return snapshot.docs.map((doc) => doc.id).toList();
     } on FirebaseAuthException catch (e) {
       throw TFirebaseAuthException(e.code).message;
     } on FirebaseException catch (e) {
@@ -528,10 +569,7 @@ class UserRepository {
       print('Error getting posts: $e');
     }
     return [];
-   
   }
-  
-
 
   Future<String> uploadImageToSupabase(File image) async {
     final fieldName = DateTime.now().microsecondsSinceEpoch.toString();
@@ -554,6 +592,7 @@ class UserRepository {
       rethrow; // Or show error Snackbar
     }
   }
+
   Future<String> uploadprofileImageToSupabase(File image) async {
     final fieldName = DateTime.now().microsecondsSinceEpoch.toString();
     final path = 'User Profile/$fieldName';
@@ -574,5 +613,180 @@ class UserRepository {
       print('Upload Error: $e');
       rethrow; // Or show error Snackbar
     }
+  }
+}
+
+class MessageApi {
+  final _firebaseMessaging = FirebaseMessaging.instance;
+  final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+  //request notification permission
+  void requrstNotificationPermision() async {
+    NotificationSettings settings = await _firebaseMessaging.requestPermission(
+      alert: true,
+      badge: true,
+      announcement: true,
+      carPlay: true,
+      criticalAlert: true,
+      provisional: true,
+
+      sound: true,
+    );
+    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      print('User granted permission');
+    } else if (settings.authorizationStatus ==
+        AuthorizationStatus.provisional) {
+      print('User granted provisional permission');
+    } else {
+      print('User declined or has not accepted permission');
+    }
+    //final FCMToken = await _firebaseMessaging.getToken();
+    getDeviceToken().then((value) {
+      print('FCM Token: $value');
+    });
+  }
+
+  //initialize local notification
+  void initLocalNotification(
+    BuildContext context,
+    RemoteMessage message,
+  ) async {
+    var androidInitalizationSettings = const AndroidInitializationSettings(
+      '@drawable/image',
+    );
+    // Initialize the local notification settings for ios
+    var iosInitalizationSettings = const DarwinInitializationSettings();
+    //initiazlize the local notification setting for both android and ios
+    var initializationSettings = InitializationSettings(
+      android: androidInitalizationSettings,
+      iOS: iosInitalizationSettings,
+    );
+// Initialize the local notification plugin
+    await _flutterLocalNotificationsPlugin.initialize(
+      initializationSettings,
+      onDidReceiveNotificationResponse: (response) {
+        handelmessage(context, message);
+
+        // Handle notification click
+      },
+    );
+  }
+
+  // Show notification from firebase
+  void firebaseInit(BuildContext context) async {
+    FirebaseMessaging.onMessage.listen((message) {
+     
+        print('Message received: ${message.notification?.title.toString()}');
+        print('Message received: ${message.notification?.body.toString()}');
+        print('Message data: ${ message.data.toString()}');
+        print('Message typ: ${ message.data['type'].toString()}');
+        print('Message id: ${ message.data['id'].toString()}');
+      
+      if (Platform.isAndroid) {
+        initLocalNotification(context, message);
+        showNotification(message);
+
+      }else{
+                
+      }
+    });
+  }
+
+  //show notification when device is in foreground
+  Future<void> showNotification(RemoteMessage message) async {
+    AndroidNotificationChannel channel = AndroidNotificationChannel(
+      Random.secure().nextInt(1000000).toString(),
+      'x_clone_app_channel',
+    );
+    AndroidNotificationDetails
+    androidPlatformChannelSpecifics = AndroidNotificationDetails(
+      channel.id.toString(),
+      channel.name.toString(),
+      channelDescription: 'This is the channel for X Clone App notifications',
+      importance: Importance.high,
+      priority: Priority.high,
+     playSound: true,
+      ticker: 'ticker' ,
+    );
+    DarwinNotificationDetails iosPlatformChannelSpecifics =
+        const DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+    NotificationDetails notificationDetails = NotificationDetails(
+      android: androidPlatformChannelSpecifics,
+      iOS: iosPlatformChannelSpecifics,
+    );
+    Future.delayed(
+      Duration.zero,(){
+        _flutterLocalNotificationsPlugin.show(
+        0,
+        message.notification?.title.toString(),
+        message.notification?.body.toString(),
+       
+       
+        
+        notificationDetails,
+      );
+      }
+      
+    );
+  }
+  // Handle message when notification is clicked we redirect user to that screen mean if some comment is made on post so if user clicked on notification we redirect user to that post comment section
+  // or if some message is sent to user so we redirect user to that message screen
+  void handelmessage(
+   BuildContext context, RemoteMessage message){
+
+    if(message.data['type'] == 'msg') {
+      // Navigate to post details page
+      Get.to(()=>SearchScreen(uid: message.data['id'],));
+    } else if (message.data['type'] == 'comment') {
+      // Navigate to comment section of the post
+      Navigator.pushNamed(
+        context,
+        '/postDetails',
+        arguments: {
+          'postId': message.data['id'],
+          'scrollToComments': true,
+        },
+      );
+    } else {
+      // Handle other types of messages
+      print('Unhandled message type: ${message.data['type']}');
+    }
+
+  }
+//
+Future<void> setupInterectMessage(BuildContext context)async{
+  //when app is terminated mean kill
+  RemoteMessage? initialMessage = await _firebaseMessaging.getInitialMessage();
+  if (initialMessage != null) {
+    // Handle the message when the app is opened from a terminated state
+    handelmessage(context, initialMessage);
+  }
+  //when app is in background
+  FirebaseMessaging.onMessageOpenedApp.listen((event){
+    handelmessage(context, event);
+
+  });
+}
+
+
+  //get device token
+  Future<String> getDeviceToken() async {
+    String? token = await _firebaseMessaging.getToken();
+    return token!;
+  }
+
+  void isTokenRefresh() async {
+    _firebaseMessaging.onTokenRefresh
+        .listen((newToken) {
+          print('New FCM Token: $newToken');
+          newToken.toString();
+        })
+        .onError((err) {
+          print('Error retrieving new FCM token: $err');
+        });
   }
 }
